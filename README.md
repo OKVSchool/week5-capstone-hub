@@ -25,7 +25,7 @@ Next.js app for documenting past, in-progress, and future coding projects
 
 - Security review — README section on XSS / raw HTML
 
-- Consistent TypeScript types — one entity interface everywhere
+- Consistent TypeScript types — one entity interface everywhere - ✔️
 
 - One advanced feature — Server Action, Suspense, or dynamic OG (pick one)
 
