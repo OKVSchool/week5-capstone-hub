@@ -1,36 +1,49 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# VSchool Week 5 Capstone
 
-## Getting Started
+Next.js app for documenting past, in-progress, and future coding projects
 
-First, run the development server:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+## What is being done to meet assignment requirements (✔️ = Completed)
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+- App Router scaffold — TypeScript, app/ directory, 3+ routes - ✔️
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- API route (GET) — JSON endpoint your list consumes
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+- Server-rendered list — no useEffect on the list page - ✔️
 
-## Learn More
+- Client filter, sort, or search — "use client" component - ✔️
 
-To learn more about Next.js, take a look at the following resources:
+- Dynamic detail route — [id] page linked from list
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+- Full CRUD — POST, update, delete on API + matching UI
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- Shared layout + loading.tsx + error.tsx on detail
 
-## Deploy on Vercel
+- Deployed to Vercel — public URL - ✔️
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- Four-states fetch — separate client widget (not your main list)
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Security review — README section on XSS / raw HTML
+
+- Consistent TypeScript types — one entity interface everywhere
+
+- One advanced feature — Server Action, Suspense, or dynamic OG (pick one)
+
+
+## Stretch — not required, attempt only after all 12 pass
+
+- Environment variable in production — used in server code only
+
+- Server-side validation — API returns 4xx + UI shows error
+
+- Optimistic UI — update before server confirms, rollback on fail
+
+- Cache control — revalidate or tag invalidation
+
+- Nested layout — route group with sidebar or sub-nav
+
+- Auth sketch — mock signed-in gate, no real OAuth
+
+
+## What is deliberitely missing
+-
