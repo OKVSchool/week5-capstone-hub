@@ -1,9 +1,10 @@
-import { projects } from "@/data/projects"
-import { notFound} from "next/navigation"
+import { store } from "@/lib/store"
+import { notFound } from "next/navigation"
+import DeleteButton from "@/components/DeleteButton"
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
     const {id } = await params
-    const project = projects.find(p => p.id === id)
+    const project = store.find(p => p.id === id)
     if (!project) notFound()
     return (
         <div className="mx-auto max-w-4xl px-6 py-12">
@@ -22,6 +23,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                 View Repo ↗
               </a>
             )}
+            <DeleteButton id={id} />
         </div>
     )
 }
