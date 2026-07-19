@@ -1,8 +1,9 @@
+import Link from "next/link";
 import type { Project } from "@/data/projects";
 
 export default function ProjectCard({ project }: { project: Project }) {
   return (
-    <div className="rounded-lg border border-zinc-200 bg-white p-5 dark:border-zinc-800 dark:bg-zinc-900">
+    <Link href={`/projects/${project.id}`} className="block rounded-lg border border-zinc-200 bg-white p-5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">
@@ -12,16 +13,6 @@ export default function ProjectCard({ project }: { project: Project }) {
             {project.date}
           </p>
         </div>
-        {project.repoUrl && (
-          <a
-            href={project.repoUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="shrink-0 text-sm font-medium text-blue-600 hover:underline dark:text-blue-400"
-          >
-            Repo ↗
-          </a>
-        )}
       </div>
       <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300">
         {project.description}
@@ -38,6 +29,6 @@ export default function ProjectCard({ project }: { project: Project }) {
           ))}
         </div>
       )}
-    </div>
+    </Link>
   );
 }
