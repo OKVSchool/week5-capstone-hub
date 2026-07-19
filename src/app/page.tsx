@@ -2,6 +2,7 @@
 import { useState, useEffect } from "react"
 import ProjectCard from "@/components/ProjectCard"
 import AddProjectForm from "@/components/AddProjectForm"
+import FetchWidget from "@/components/FetchWidget"
 import type { Project } from "@/data/projects"
 
 export default function Home() {
@@ -58,6 +59,8 @@ export default function Home() {
           <ProjectCard key={project.id} project={project} />
         ))}
       </div>
+
+      <FetchWidget />
     </div>
   )
 }
