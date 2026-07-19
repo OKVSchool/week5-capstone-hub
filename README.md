@@ -7,23 +7,23 @@ Next.js app for documenting past, in-progress, and future coding projects
 
 - 1. App Router scaffold — TypeScript, app/ directory, 3+ routes - ✔️
 
-- 2. API route (GET) — JSON endpoint your list consumes
+- 2. API route (GET) — JSON endpoint your list consumes - ✔️
 
 - 3. Server-rendered list — no useEffect on the list page - ✔️
 
 - 4. Client filter, sort, or search — "use client" component - ✔️
 
-- 5. Dynamic detail route — [id] page linked from list
+- 5. Dynamic detail route — [id] page linked from list - ✔️
 
-- 6. Full CRUD — POST, update, delete on API + matching UI
+- 6. Full CRUD — POST, update, delete on API + matching UI - ✔️
 
-- 7. Shared layout + loading.tsx + error.tsx on detail
+- 7. Shared layout + loading.tsx + error.tsx on detail - ✔️
 
 - 8. Deployed to Vercel — public URL - ✔️
 
-- 9. Four-states fetch — separate client widget (not your main list)
+- 9. Four-states fetch — separate client widget (not your main list) - ✔️
 
-- 10. Security review — README section on XSS / raw HTML
+- 10. Security review — README section on XSS / raw HTML - ✔️
 
 - 11. Consistent TypeScript types — one entity interface everywhere - ✔️
 
@@ -47,3 +47,11 @@ Next.js app for documenting past, in-progress, and future coding projects
 
 ## What is deliberitely missing
 -
+
+## Security - XSS
+- This app protects against XSS using the following:
+    -React escapes all values rendered in JSX by default. Curly-brae expressions like {project.title} are always treated as text, never as HTML.
+
+    - No dangerouslySetHTML is used anywhere in the codebase.
+    
+    - User input from the search box and add-project form never touches the DOM as raw HTML
