@@ -1,5 +1,6 @@
 import { store } from "@/lib/store"
 import { notFound } from "next/navigation"
+import Link from "next/link"
 import DeleteButton from "@/components/DeleteButton"
 import EditProjectForm from "@/components/EditProjectForm"
 
@@ -9,6 +10,12 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
     if (!project) notFound()
     return (
         <div className="mx-auto max-w-4xl px-6 py-12">
+            <Link
+              href="/"
+              className="text-sm text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-zinc-50"
+            >
+              ← Project List
+            </Link>
             <h1 className="text-2xl font-semibold text-zinc-900 dark:text-zinc-50">
                 {project.title}
             </h1>
