@@ -7,18 +7,29 @@ export default function AddProjectForm({ onAdd }: { onAdd: () => void }) {
   const [description, setDescription] = useState("")
   const [date, setDate] = useState("")
   const [repoUrl, setRepoUrl] = useState("")
+  const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    await fetch("/api/projects", {
+    setError(null)
+
+    const res = await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined }),
     })
+
+    if (!res.ok) {
+      const data = await res.json()
+      setError(data.error ?? "Something went wrong")
+      return
+    }
+
     setTitle("")
     setDescription("")
     setDate("")
     setRepoUrl("")
+    setError(null)
     setOpen(false)
     onAdd()
   }
@@ -36,6 +47,11 @@ export default function AddProjectForm({ onAdd }: { onAdd: () => void }) {
 
   return (
     <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+      {error && (
+        <p className="rounded bg-red-50 px-3 py-2 text-sm text-red-600 dark:bg-red-950 dark:text-red-400">
+          {error}
+        </p>
+      )}
       <input
         required
         placeholder="Title"

@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Course Project Hub",
-  description: "A hub for tracking course projects",
+  description: `A hub for tracking course projects — ${process.env.APP_OWNER ?? "VSchool"}`,
 };
 
 export default function RootLayout({
