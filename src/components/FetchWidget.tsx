@@ -61,26 +61,26 @@ export default function FetchWidget() {
         <p className="mb-2 text-xs text-zinc-400">Demo all four states:</p>
         <div className="flex flex-wrap gap-2">
           <button
-            onClick={load}
-            className="rounded border px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            onClick={() => setState({ status: "loading" })}
+            className={`rounded border px-2 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 ${state.status === "loading" ? "border-zinc-900 text-zinc-900 dark:border-zinc-50 dark:text-zinc-50" : "text-zinc-500"}`}
           >
             Loading
           </button>
           <button
             onClick={() => setState({ status: "error", message: "Simulated network error" })}
-            className="rounded border px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            className={`rounded border px-2 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 ${state.status === "error" ? "border-zinc-900 text-zinc-900 dark:border-zinc-50 dark:text-zinc-50" : "text-zinc-500"}`}
           >
             Error
           </button>
           <button
             onClick={() => setState({ status: "empty" })}
-            className="rounded border px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            className={`rounded border px-2 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 ${state.status === "empty" ? "border-zinc-900 text-zinc-900 dark:border-zinc-50 dark:text-zinc-50" : "text-zinc-500"}`}
           >
             Empty
           </button>
           <button
             onClick={load}
-            className="rounded border px-2 py-1 text-xs text-zinc-500 hover:bg-zinc-50 dark:hover:bg-zinc-800"
+            className={`rounded border px-2 py-1 text-xs hover:bg-zinc-50 dark:hover:bg-zinc-800 ${state.status === "data" ? "border-zinc-900 text-zinc-900 dark:border-zinc-50 dark:text-zinc-50" : "text-zinc-500"}`}
           >
             Data
           </button>
