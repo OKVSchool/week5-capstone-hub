@@ -27,7 +27,7 @@ Next.js app for documenting past, in-progress, and future coding projects
 
 - 11. Consistent TypeScript types — one entity interface everywhere - ✔️
 
-- 12. One advanced feature — Server Action, Suspense, or dynamic OG (pick one) - ✔️
+- 12. One advanced feature — Dynamic OG image (`/projects/[id]/opengraph-image.tsx`) generates a unique social preview card per project using `ImageResponse` from `next/og` - ✔️
 
 
 ## Stretch — not required, attempt only after all 12 pass
@@ -45,8 +45,10 @@ Next.js app for documenting past, in-progress, and future coding projects
 - Auth sketch — mock signed-in gate, no real OAuth
 
 
-## What is deliberitely missing
--Project Ideas, References, and Settings tabs are currently incomplete and will be added in the future.
+## What is deliberately missing
+
+- Project Ideas, References, and Settings tabs are placeholders — content arrives in a later milestone.
+- CRUD data lives in an in-memory store (`src/lib/store.ts`). Added or edited projects reset whenever the app redeploys or the server goes cold. A hosted database (Postgres via Prisma) replaces this in Milestone 3.
 
 ## Security - XSS
 - This app protects against XSS using the following:
