@@ -32,9 +32,9 @@ Next.js app for documenting past, in-progress, and future coding projects
 
 ## Stretch — not required, attempt only after all 12 pass
 
-- Environment variable in production — used in server code only
+- Environment variable in production — used in server code only - ✔️
 
-- Server-side validation — API returns 4xx + UI shows error
+- Server-side validation — API returns 4xx + UI shows error - ✔️
 
 - Optimistic UI — update before server confirms, rollback on fail
 
