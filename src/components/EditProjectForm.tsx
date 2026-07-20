@@ -1,0 +1,75 @@
+'use client'
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import type { Project } from "@/data/projects"
+
+export default function EditProjectForm({ project }: { project: Project }) {
+  const router = useRouter()
+  const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState(project.title)
+  const [description, setDescription] = useState(project.description)
+  const [date, setDate] = useState(project.date)
+  const [repoUrl, setRepoUrl] = useState(project.repoUrl ?? "")
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault()
+    await fetch(`/api/projects/${project.id}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined }),
+    })
+    setOpen(false)
+    router.refresh()
+  }
+
+  if (!open) {
+    return (
+      <button
+        onClick={() => setOpen(true)}
+        className="mt-4 rounded border px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800"
+      >
+        Edit project
+      </button>
+    )
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="mt-4 flex flex-col gap-3 rounded-lg border border-zinc-200 p-4 dark:border-zinc-800">
+      <input
+        required
+        value={title}
+        onChange={e => setTitle(e.target.value)}
+        placeholder="Title"
+        className="rounded border px-3 py-2 text-sm"
+      />
+      <textarea
+        required
+        value={description}
+        onChange={e => setDescription(e.target.value)}
+        placeholder="Description"
+        className="rounded border px-3 py-2 text-sm"
+      />
+      <input
+        required
+        type="date"
+        value={date}
+        onChange={e => setDate(e.target.value)}
+        className="rounded border px-3 py-2 text-sm"
+      />
+      <input
+        value={repoUrl}
+        onChange={e => setRepoUrl(e.target.value)}
+        placeholder="Repo URL (optional)"
+        className="rounded border px-3 py-2 text-sm"
+      />
+      <div className="flex gap-2">
+        <button type="submit" className="rounded bg-zinc-900 px-4 py-2 text-sm text-white hover:bg-zinc-700 dark:bg-zinc-50 dark:text-zinc-900">
+          Save
+        </button>
+        <button type="button" onClick={() => setOpen(false)} className="rounded border px-4 py-2 text-sm hover:bg-zinc-50 dark:hover:bg-zinc-800">
+          Cancel
+        </button>
+      </div>
+    </form>
+  )
+}

@@ -7,7 +7,6 @@ export type Project = {
   tags?: string[];
 };
 
-// TODO: Replace these with your actual course assignments
 export const projects: Project[] = [
   {
     id: "1",

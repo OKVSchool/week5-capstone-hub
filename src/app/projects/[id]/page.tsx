@@ -1,6 +1,7 @@
 import { store } from "@/lib/store"
 import { notFound } from "next/navigation"
 import DeleteButton from "@/components/DeleteButton"
+import EditProjectForm from "@/components/EditProjectForm"
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
     const {id } = await params
@@ -23,6 +24,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                 View Repo ↗
               </a>
             )}
+            <EditProjectForm project={project} />
             <DeleteButton id={id} />
         </div>
     )

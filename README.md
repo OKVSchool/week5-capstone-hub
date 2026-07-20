@@ -27,7 +27,7 @@ Next.js app for documenting past, in-progress, and future coding projects
 
 - 11. Consistent TypeScript types — one entity interface everywhere - ✔️
 
-- 12. One advanced feature — Server Action, Suspense, or dynamic OG (pick one)
+- 12. One advanced feature — Server Action, Suspense, or dynamic OG (pick one) - ✔️
 
 
 ## Stretch — not required, attempt only after all 12 pass
@@ -46,7 +46,7 @@ Next.js app for documenting past, in-progress, and future coding projects
 
 
 ## What is deliberitely missing
--
+-Project Ideas, References, and Settings tabs are currently incomplete and will be added in the future.
 
 ## Security - XSS
 - This app protects against XSS using the following:
