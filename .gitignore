@@ -36,6 +36,10 @@ yarn-error.log*
 # vercel
 .vercel
 
+# expo experiment (not part of capstone)
+.expo/
+projectHub/
+
 # typescript
 *.tsbuildinfo
 next-env.d.ts
