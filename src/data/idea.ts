@@ -9,4 +9,5 @@ export type Idea = {
   lane: Lane
   text?: string
   createdAt: string
+  priority?: number   // 1 (lowest) – 5 (highest)
 }

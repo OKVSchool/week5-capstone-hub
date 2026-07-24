@@ -13,6 +13,10 @@ export async function PATCH(
   }
 
   const body = await request.json()
+  // null → undefined so we don't persist null priority
+  if ("priority" in body) {
+    body.priority = body.priority ?? undefined
+  }
   store[index] = { ...store[index], ...body }
   return Response.json(store[index])
 }

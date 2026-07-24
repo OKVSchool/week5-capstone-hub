@@ -1,16 +1,25 @@
 'use client'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Thought, Category } from "@/data/thoughts"
 import { getThoughtLabel, CATEGORIES } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
 import type { Project } from "@/data/projects"
+import StarRating from "./StarRating"
 
 type Props = {
   thought: Thought
   ideas: Idea[]
   liveProjects: Project[]
   showPromoteToIdea?: boolean
+  autoAssignLevel?: number
+  onPriorityChange?: (id: string, level: number | undefined) => void
+  // Accordion props — managed by the parent tab or card
+  isOpen: boolean
+  isPinned: boolean
+  onToggle: () => void
+  onPin: () => void
+  onUnpin: () => void
 }
 
 type Mode = "view" | "edit" | "move" | "promote" | "confirmDelete"
@@ -21,31 +30,34 @@ const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-60
 const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950"
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
-export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteToIdea = false }: Props) {
+export default function ThoughtCard({
+  thought, ideas, liveProjects, showPromoteToIdea = false,
+  autoAssignLevel, onPriorityChange,
+  isOpen, isPinned, onToggle, onPin, onUnpin,
+}: Props) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [mode, setMode] = useState<Mode>("view")
 
-  // edit state
   const [title, setTitle] = useState(thought.title ?? "")
   const [category, setCategory] = useState<Category | "">(thought.category ?? "")
   const [text, setText] = useState(thought.text ?? "")
   const [error, setError] = useState("")
 
-  // promote-to-idea state
   const [pTitle, setPTitle] = useState(thought.title ?? "")
   const [pFramework, setPFramework] = useState("")
   const [pLane, setPLane] = useState("")
   const [pText, setPText] = useState(thought.text ?? "")
   const [pError, setPError] = useState("")
 
-  // move state
   const [moveSection, setMoveSection] = useState<"" | "standalone" | "ideas" | "projects">("")
 
   const editBlank = !title.trim() && !category && !text.trim()
   const promoteReady = pTitle.trim() && pFramework.trim() && pLane
 
   function reset() { setMode("view"); setError(""); setPError(""); setMoveSection("") }
+
+  // Reset form state when the card closes
+  useEffect(() => { if (!isOpen) reset() }, [isOpen])
 
   async function handleSave() {
     if (editBlank) { setError("At least one field is required."); return }
@@ -77,33 +89,51 @@ export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteT
 
   async function handlePromote() {
     if (!promoteReady) { setPError("Title, framework, and lane are all required."); return }
-    // create idea
     const res = await fetch("/api/ideas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: pTitle, framework: pFramework, lane: pLane, text: pText }),
     })
     if (!res.ok) { const d = await res.json(); setPError(d.error ?? "Failed."); return }
-    // delete the thought
     await fetch(`/api/thoughts/${thought.id}`, { method: "DELETE" })
     router.refresh()
   }
 
+  const starDisplay = thought.priority !== undefined
+    ? <span className="text-yellow-400 text-xs ml-1">{"★".repeat(thought.priority)}</span>
+    : null
+
   return (
     <div className="rounded border border-zinc-200 dark:border-zinc-700">
-      {/* Header row */}
-      <button
-        onClick={() => { setOpen((o) => !o); if (open) reset() }}
-        className="flex w-full items-center justify-between px-4 py-3 text-left text-sm text-zinc-800 dark:text-zinc-200 hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+      {/* Header */}
+      <div
+        onClick={onToggle}
+        className="flex w-full items-center px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer select-none"
       >
-        <span>{getThoughtLabel(thought)}</span>
-        <span className="text-zinc-400 text-xs">{open ? "▲" : "▼"}</span>
-      </button>
+        <span className="flex-1 text-left text-sm text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
+          {getThoughtLabel(thought)}{starDisplay}
+        </span>
+        {/* Pin controls — stopPropagation so clicks don't also toggle the accordion */}
+        <div className="flex items-center gap-2 mx-2" onClick={e => e.stopPropagation()}>
+          {isOpen && !isPinned && (
+            <button type="button" onClick={onPin}
+              className="text-xs text-zinc-400 hover:text-amber-400 dark:text-zinc-500 dark:hover:text-amber-400 leading-none">
+              pin
+            </button>
+          )}
+          {isPinned && (
+            <button type="button" onClick={onUnpin}
+              className="text-xs font-medium text-amber-400 hover:text-amber-600 leading-none">
+              pinned ×
+            </button>
+          )}
+        </div>
+        <span className="text-zinc-400 text-xs">{isOpen ? "▲" : "▼"}</span>
+      </div>
 
-      {open && (
+      {isOpen && (
         <div className="border-t border-zinc-100 dark:border-zinc-700 px-4 py-3 space-y-3">
 
-          {/* VIEW mode */}
           {mode === "view" && (
             <>
               {thought.category && (
@@ -119,6 +149,23 @@ export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteT
                   <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">{thought.text}</p></div>
               )}
               <p className="text-xs text-zinc-400">{new Date(thought.createdAt).toLocaleDateString()}</p>
+
+              {onPriorityChange && (thought.priority !== undefined || autoAssignLevel !== undefined) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-400 uppercase tracking-wide">Priority</span>
+                  {thought.priority !== undefined ? (
+                    <StarRating value={thought.priority} onChange={(p) => onPriorityChange(thought.id, p)} />
+                  ) : (
+                    <button
+                      onClick={() => onPriorityChange(thought.id, autoAssignLevel!)}
+                      className="rounded border border-zinc-200 px-2 py-0.5 text-xs text-zinc-500 hover:border-yellow-300 hover:text-yellow-600 dark:border-zinc-700 dark:hover:border-yellow-600 dark:hover:text-yellow-400"
+                    >
+                      + Add Priority
+                    </button>
+                  )}
+                </div>
+              )}
+
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setMode("move")} className={BTN_GHOST}>Move Thought</button>
                 {showPromoteToIdea && (
@@ -130,7 +177,6 @@ export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteT
             </>
           )}
 
-          {/* CONFIRM DELETE */}
           {mode === "confirmDelete" && (
             <div className="space-y-2">
               <p className="text-sm text-zinc-700 dark:text-zinc-300">Delete this thought?</p>
@@ -141,7 +187,6 @@ export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteT
             </div>
           )}
 
-          {/* EDIT mode */}
           {mode === "edit" && (
             <>
               <div className="space-y-2">
@@ -160,15 +205,12 @@ export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteT
             </>
           )}
 
-          {/* MOVE mode */}
           {mode === "move" && (
             <div className="space-y-2">
               <p className="text-xs text-zinc-500">Move this thought to:</p>
               <button onClick={() => handleMove("standalone")} className="block w-full text-left rounded border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
                 Standalone (Thoughts tab)
               </button>
-
-              {/* Ideas */}
               <button onClick={() => setMoveSection(moveSection === "ideas" ? "" : "ideas")} className="block w-full text-left rounded border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
                 Ideas {moveSection === "ideas" ? "▲" : "▼"}
               </button>
@@ -183,8 +225,6 @@ export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteT
                   ))}
                 </div>
               )}
-
-              {/* Projects */}
               <button onClick={() => setMoveSection(moveSection === "projects" ? "" : "projects")} className="block w-full text-left rounded border border-zinc-200 px-3 py-2 text-sm font-medium text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
                 Projects {moveSection === "projects" ? "▲" : "▼"}
               </button>
@@ -199,12 +239,10 @@ export default function ThoughtCard({ thought, ideas, liveProjects, showPromoteT
                   ))}
                 </div>
               )}
-
               <button onClick={reset} className={BTN_GHOST}>Cancel</button>
             </div>
           )}
 
-          {/* PROMOTE TO IDEA mode */}
           {mode === "promote" && (
             <>
               <p className="text-xs text-zinc-500">A thought becomes an Idea when it has a title, framework, and lane.</p>

@@ -1,5 +1,5 @@
 'use client'
-import { useState } from "react"
+import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Project } from "@/data/projects"
 import type { RemovedProject } from "@/data/removedProject"
@@ -9,6 +9,7 @@ import type { Idea } from "@/data/idea"
 import { LANES } from "@/data/idea"
 import type { Lane } from "@/data/idea"
 import ThoughtCard from "./ThoughtCard"
+import StarRating from "./StarRating"
 
 type Mode = "live" | "orphaned" | "archived"
 
@@ -18,6 +19,14 @@ type Props = {
   thoughts: Thought[]
   ideas: Idea[]
   liveProjects: Project[]
+  autoAssignLevel?: number
+  onPriorityChange?: (id: string, level: number | undefined) => void
+  // Accordion props — managed by ProjectsTab
+  isOpen: boolean
+  isPinned: boolean
+  onToggle: () => void
+  onPin: () => void
+  onUnpin: () => void
 }
 
 const INPUT = "w-full rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
@@ -26,29 +35,59 @@ const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-60
 const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 disabled:opacity-40 disabled:cursor-not-allowed"
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
-export default function ProjectPanel({ project, mode, thoughts, ideas, liveProjects }: Props) {
+export default function ProjectPanel({
+  project, mode, thoughts, ideas, liveProjects, autoAssignLevel, onPriorityChange,
+  isOpen, isPinned, onToggle, onPin, onUnpin,
+}: Props) {
   const router = useRouter()
-  const [open, setOpen] = useState(false)
   const [showForm, setShowForm] = useState(false)
   const [showMoveForm, setShowMoveForm] = useState(false)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
 
-  // new thought state
   const [tTitle, setTTitle] = useState("")
   const [tCategory, setTCategory] = useState<Category | "">("")
   const [tText, setTText] = useState("")
   const [tError, setTError] = useState("")
 
-  // move-to-ideas state (for archived)
   const [mTitle, setMTitle] = useState(project.title)
   const [mFramework, setMFramework] = useState("")
   const [mLane, setMLane] = useState<Lane | "">("")
   const [mText, setMText] = useState(("description" in project ? project.description : "") ?? "")
   const [mError, setMError] = useState("")
 
+  // Accordion state for nested ThoughtCards
+  const [innerOpenId, setInnerOpenId] = useState<string | null>(null)
+  const [innerPinnedIds, setInnerPinnedIds] = useState<Set<string>>(new Set())
+
   const thoughtBlank = !tTitle.trim() && !tCategory && !tText.trim()
   const moveReady = mTitle.trim() && mFramework.trim() && mLane
   const count = thoughts.length
+  const livePriority = mode === "live" ? (project as Project).priority : undefined
+
+  // Reset form + inner accordion when this panel closes
+  useEffect(() => {
+    if (!isOpen) {
+      setShowForm(false)
+      setShowMoveForm(false)
+      setConfirmDeleteAll(false)
+      setTError("")
+      setMError("")
+      setInnerOpenId(null)
+      setInnerPinnedIds(new Set())
+    }
+  }, [isOpen])
+
+  function handleInnerToggle(id: string) {
+    if (innerPinnedIds.has(id)) return
+    setInnerOpenId(prev => prev === id ? null : id)
+  }
+  function handleInnerPin(id: string) {
+    setInnerPinnedIds(prev => new Set([...prev, id]))
+    setInnerOpenId(null)
+  }
+  function handleInnerUnpin(id: string) {
+    setInnerPinnedIds(prev => { const n = new Set(prev); n.delete(id); return n })
+  }
 
   async function handleAddThought(e: React.FormEvent) {
     e.preventDefault()
@@ -87,45 +126,80 @@ export default function ProjectPanel({ project, mode, thoughts, ideas, liveProje
 
   return (
     <div className={`rounded border ${mode === "orphaned" ? "border-red-200 dark:border-red-900" : "border-zinc-200 dark:border-zinc-700"}`}>
-      <button
-        onClick={() => { setOpen((o) => !o); if (open) { setShowForm(false); setShowMoveForm(false) } }}
-        className="flex w-full items-center justify-between px-4 py-3 text-left hover:bg-zinc-50 dark:hover:bg-zinc-800/50"
+      {/* Header */}
+      <div
+        onClick={onToggle}
+        className="flex w-full items-center px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer select-none"
       >
-        <span className={titleClass}>
+        <span className={`flex-1 text-left ${titleClass}`}>
           {project.title}
+          {mode === "live" && livePriority !== undefined && (
+            <span className="ml-1 text-yellow-400 text-xs font-normal">{"★".repeat(livePriority)}</span>
+          )}
           {mode === "orphaned" && <span className="ml-2 text-xs font-normal opacity-70">(deleted)</span>}
           {mode === "archived" && <span className="ml-2 text-xs font-normal opacity-70">(archived)</span>}
           {count > 0 && <span className="ml-2 text-xs font-normal text-zinc-400">({count})</span>}
         </span>
-        <span className="text-zinc-400 text-xs">{open ? "▲" : "▼"}</span>
-      </button>
-
-      {open && (
-        <div className="border-t border-zinc-100 dark:border-zinc-700 px-4 py-3 space-y-3">
-
-          {/* LIVE: + New Thought */}
-          {mode === "live" && !showForm && (
-            <button onClick={() => setShowForm(true)} className="text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
-              + New Thought
+        <div className="flex items-center gap-2 mx-2" onClick={e => e.stopPropagation()}>
+          {isOpen && !isPinned && (
+            <button type="button" onClick={onPin}
+              className="text-xs text-zinc-400 hover:text-amber-400 dark:text-zinc-500 dark:hover:text-amber-400 leading-none">
+              pin
             </button>
           )}
-          {mode === "live" && showForm && (
-            <form onSubmit={handleAddThought} className="space-y-2">
-              <input type="text" value={tTitle} onChange={(e) => setTTitle(e.target.value)} placeholder="Title (optional)" className={INPUT} />
-              <select value={tCategory} onChange={(e) => setTCategory(e.target.value as Category | "")} className={INPUT}>
-                <option value="">Category (optional)</option>
-                {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
-              </select>
-              <textarea value={tText} onChange={(e) => setTText(e.target.value)} placeholder="Notes (optional)" rows={3} className={INPUT} />
-              {tError && <p className="text-xs text-red-500">{tError}</p>}
-              <div className="flex gap-2">
-                <button type="submit" disabled={thoughtBlank} className={BTN_PRIMARY}>Save Thought</button>
-                <button type="button" onClick={() => { setShowForm(false); setTError("") }} className={BTN_GHOST}>Cancel</button>
-              </div>
-            </form>
+          {isPinned && (
+            <button type="button" onClick={onUnpin}
+              className="text-xs font-medium text-amber-400 hover:text-amber-600 leading-none">
+              pinned ×
+            </button>
+          )}
+        </div>
+        <span className="text-zinc-400 text-xs">{isOpen ? "▲" : "▼"}</span>
+      </div>
+
+      {isOpen && (
+        <div className="border-t border-zinc-100 dark:border-zinc-700 px-4 py-3 space-y-3">
+
+          {mode === "live" && (
+            <>
+              {onPriorityChange && (livePriority !== undefined || autoAssignLevel !== undefined) && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-zinc-400 uppercase tracking-wide">Priority</span>
+                  {livePriority !== undefined ? (
+                    <StarRating value={livePriority} onChange={(p) => onPriorityChange(project.id, p)} />
+                  ) : (
+                    <button
+                      onClick={() => onPriorityChange(project.id, autoAssignLevel!)}
+                      className="rounded border border-zinc-200 px-2 py-0.5 text-xs text-zinc-500 hover:border-yellow-300 hover:text-yellow-600 dark:border-zinc-700 dark:hover:border-yellow-600 dark:hover:text-yellow-400"
+                    >
+                      + Add Priority
+                    </button>
+                  )}
+                </div>
+              )}
+              {!showForm && (
+                <button onClick={() => setShowForm(true)} className="text-sm text-zinc-500 hover:text-zinc-800 dark:hover:text-zinc-200">
+                  + New Thought
+                </button>
+              )}
+              {showForm && (
+                <form onSubmit={handleAddThought} className="space-y-2">
+                  <input type="text" value={tTitle} onChange={(e) => setTTitle(e.target.value)} placeholder="Title (optional)" className={INPUT} />
+                  <select value={tCategory} onChange={(e) => setTCategory(e.target.value as Category | "")} className={INPUT}>
+                    <option value="">Category (optional)</option>
+                    {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                  </select>
+                  <textarea value={tText} onChange={(e) => setTText(e.target.value)} placeholder="Notes (optional)" rows={3} className={INPUT} />
+                  {tError && <p className="text-xs text-red-500">{tError}</p>}
+                  <div className="flex gap-2">
+                    <button type="submit" disabled={thoughtBlank} className={BTN_PRIMARY}>Save Thought</button>
+                    <button type="button" onClick={() => { setShowForm(false); setTError("") }} className={BTN_GHOST}>Cancel</button>
+                  </div>
+                </form>
+              )}
+            </>
           )}
 
-          {/* ORPHANED: Delete All */}
           {mode === "orphaned" && !confirmDeleteAll && (
             <button onClick={() => setConfirmDeleteAll(true)} className={BTN_RED}>Delete All</button>
           )}
@@ -141,7 +215,6 @@ export default function ProjectPanel({ project, mode, thoughts, ideas, liveProje
             </div>
           )}
 
-          {/* ARCHIVED: Move to Ideas */}
           {mode === "archived" && !showMoveForm && (
             <button onClick={() => setShowMoveForm(true)} className={BTN_GREEN}>Move to Ideas</button>
           )}
@@ -163,14 +236,23 @@ export default function ProjectPanel({ project, mode, thoughts, ideas, liveProje
             </form>
           )}
 
-          {/* Thoughts list */}
           {thoughts.length === 0 && !showForm && !showMoveForm && (
             <p className="text-xs text-zinc-400">No thoughts yet.</p>
           )}
           {thoughts.length > 0 && (
             <div className="space-y-2 pt-1">
               {[...thoughts].reverse().map((t) => (
-                <ThoughtCard key={t.id} thought={t} ideas={ideas} liveProjects={liveProjects} />
+                <ThoughtCard
+                  key={t.id}
+                  thought={t}
+                  ideas={ideas}
+                  liveProjects={liveProjects}
+                  isOpen={innerOpenId === t.id || innerPinnedIds.has(t.id)}
+                  isPinned={innerPinnedIds.has(t.id)}
+                  onToggle={() => handleInnerToggle(t.id)}
+                  onPin={() => handleInnerPin(t.id)}
+                  onUnpin={() => handleInnerUnpin(t.id)}
+                />
               ))}
             </div>
           )}

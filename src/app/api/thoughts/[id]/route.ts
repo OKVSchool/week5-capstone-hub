@@ -15,20 +15,22 @@ export async function PATCH(
   const text = body.text?.trim() ?? ""
   const category: Category | "" = CATEGORIES.includes(body.category) ? body.category : ""
 
-  if (!title && !text && !category) {
+  const hasPriority = "priority" in body
+  const hasAttachment = "ideaId" in body || "projectId" in body
+  const hasContent = title || text || category
+
+  if (!hasPriority && !hasAttachment && !hasContent) {
     return Response.json(
-      { error: "At least one of title, category, or text is required." },
+      { error: "Nothing to update." },
       { status: 400 }
     )
   }
 
-  // Allow moving: if body includes ideaId/projectId keys (even null), update attachment
-  const updates: Partial<typeof thoughtStore[0]> = {
-    title: title || undefined,
-    category: category || undefined,
-    text: text || undefined,
-  }
-
+  const updates: Partial<typeof thoughtStore[0]> = {}
+  if ("title" in body) updates.title = title || undefined
+  if ("category" in body) updates.category = category || undefined
+  if ("text" in body) updates.text = text || undefined
+  if (hasPriority) updates.priority = body.priority ?? undefined
   if ("ideaId" in body) updates.ideaId = body.ideaId ?? undefined
   if ("projectId" in body) updates.projectId = body.projectId ?? undefined
 

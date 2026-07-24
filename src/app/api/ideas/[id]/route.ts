@@ -14,24 +14,37 @@ export async function PATCH(
   if (idx === -1) return Response.json({ error: "Not found" }, { status: 404 })
 
   const body = await request.json()
-  const title = body.title?.trim() ?? ""
-  const framework = body.framework?.trim() ?? ""
-  const lane: Lane | "" = LANES.includes(body.lane) ? body.lane : ""
-  const text = body.text?.trim() ?? ""
+  const hasPriority = "priority" in body
+  const hasContent = body.title !== undefined || body.framework !== undefined || body.lane !== undefined
 
-  if (!title || !framework || !lane) {
-    return Response.json(
-      { error: "Title, framework, and lane are all required." },
-      { status: 400 }
-    )
+  if (!hasPriority && !hasContent) {
+    return Response.json({ error: "Nothing to update." }, { status: 400 })
   }
 
-  ideaStore[idx] = {
-    ...ideaStore[idx],
-    title,
-    framework,
-    lane,
-    text: text || undefined,
+  if (hasContent) {
+    const title = body.title?.trim() ?? ""
+    const framework = body.framework?.trim() ?? ""
+    const lane: Lane | "" = LANES.includes(body.lane) ? body.lane : ""
+    const text = body.text?.trim() ?? ""
+
+    if (!title || !framework || !lane) {
+      return Response.json(
+        { error: "Title, framework, and lane are all required." },
+        { status: 400 }
+      )
+    }
+
+    ideaStore[idx] = {
+      ...ideaStore[idx],
+      title,
+      framework,
+      lane,
+      text: text || undefined,
+    }
+  }
+
+  if (hasPriority) {
+    ideaStore[idx] = { ...ideaStore[idx], priority: body.priority ?? undefined }
   }
 
   return Response.json(ideaStore[idx])

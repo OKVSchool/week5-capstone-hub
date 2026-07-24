@@ -7,6 +7,7 @@ export type Project = {
   tags?: string[];
   framework?: string;
   lane?: string;
+  priority?: number;  // 1 (lowest) – 5 (highest)
 };
 
 export const projects: Project[] = [
