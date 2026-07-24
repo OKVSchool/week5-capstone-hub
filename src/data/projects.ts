@@ -5,6 +5,8 @@ export type Project = {
   date: string; // "YYYY-MM-DD" — sorts correctly as a string
   repoUrl?: string;
   tags?: string[];
+  framework?: string;
+  lane?: string;
 };
 
 export const projects: Project[] = [

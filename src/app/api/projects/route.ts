@@ -22,6 +22,8 @@ export async function POST(request: Request) {
     date: body.date.trim(),
     ...(body.repoUrl && { repoUrl: body.repoUrl }),
     ...(body.tags && { tags: body.tags }),
+    ...(body.framework?.trim() && { framework: body.framework.trim() }),
+    ...(body.lane?.trim() && { lane: body.lane.trim() }),
   }
 
   store.push(newProject)

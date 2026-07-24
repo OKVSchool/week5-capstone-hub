@@ -1,12 +1,17 @@
 'use client'
 import { useState } from "react"
+import { LANES } from "@/data/idea"
+import TagInput from "./TagInput"
 
-export default function AddProjectForm({ onAdd }: { onAdd: () => void }) {
+export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: () => void; existingTags?: string[] }) {
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
   const [date, setDate] = useState("")
   const [repoUrl, setRepoUrl] = useState("")
+  const [framework, setFramework] = useState("")
+  const [lane, setLane] = useState("")
+  const [tags, setTags] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
   async function handleSubmit(e: React.FormEvent) {
@@ -16,7 +21,7 @@ export default function AddProjectForm({ onAdd }: { onAdd: () => void }) {
     const res = await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined }),
+      body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined, framework: framework || undefined, lane: lane || undefined, tags: tags.length ? tags : undefined }),
     })
 
     if (!res.ok) {
@@ -29,6 +34,9 @@ export default function AddProjectForm({ onAdd }: { onAdd: () => void }) {
     setDescription("")
     setDate("")
     setRepoUrl("")
+    setFramework("")
+    setLane("")
+    setTags([])
     setError(null)
     setOpen(false)
     onAdd()
@@ -66,13 +74,37 @@ export default function AddProjectForm({ onAdd }: { onAdd: () => void }) {
         onChange={e => setDescription(e.target.value)}
         className="rounded border px-3 py-2 text-sm"
       />
+      <div className="flex gap-2 items-center">
+        <input
+          required
+          type="date"
+          value={date}
+          onChange={e => setDate(e.target.value)}
+          className="flex-1 rounded border px-3 py-2 text-sm"
+        />
+        <button
+          type="button"
+          onClick={() => setDate(new Date().toISOString().split("T")[0])}
+          className="rounded border px-3 py-2 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 whitespace-nowrap"
+        >
+          Today
+        </button>
+      </div>
       <input
-        required
-        type="date"
-        value={date}
-        onChange={e => setDate(e.target.value)}
+        placeholder="Framework (optional)"
+        value={framework}
+        onChange={e => setFramework(e.target.value)}
         className="rounded border px-3 py-2 text-sm"
       />
+      <select
+        value={lane}
+        onChange={e => setLane(e.target.value)}
+        className="rounded border px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900"
+      >
+        <option value="">Lane (optional)</option>
+        {LANES.map(l => <option key={l} value={l}>{l}</option>)}
+      </select>
+      <TagInput tags={tags} onChange={setTags} existingTags={existingTags} />
       <input
         placeholder="Repo URL (optional)"
         value={repoUrl}

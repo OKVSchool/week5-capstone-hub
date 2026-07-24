@@ -1,4 +1,5 @@
 import { store } from "@/lib/store"
+import { thoughtStore } from "@/lib/thoughtStore"
 
 export async function PATCH(
   request: Request,
@@ -17,16 +18,26 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  _request: Request,
+  request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
   const { id } = await params
-  const index = store.findIndex(p => p.id === id)
+  const { searchParams } = new URL(request.url)
+  const cascade = searchParams.get("cascade") === "true"
 
+  const index = store.findIndex(p => p.id === id)
   if (index === -1) {
     return Response.json({ error: "Not found" }, { status: 404 })
   }
 
-  const deleted = store.splice(index, 1)
-  return Response.json(deleted[0])
+  store.splice(index, 1)
+
+  if (cascade) {
+    let i = thoughtStore.length
+    while (i--) {
+      if (thoughtStore[i].projectId === id) thoughtStore.splice(i, 1)
+    }
+  }
+
+  return new Response(null, { status: 204 })
 }

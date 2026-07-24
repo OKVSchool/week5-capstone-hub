@@ -15,18 +15,26 @@ export default function ProjectCard({ project }: { project: Project }) {
         <p className="mt-3 text-sm text-zinc-600 dark:text-zinc-300">
           {project.description}
         </p>
-        {project.tags && project.tags.length > 0 && (
-          <div className="mt-4 flex flex-wrap gap-2">
-            {project.tags.map((tag) => (
-              <span
-                key={tag}
-                className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
-              >
-                {tag}
-              </span>
-            ))}
-          </div>
-        )}
+        <div className="mt-3 flex flex-wrap gap-2">
+          {project.framework && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
+              {project.framework}
+            </span>
+          )}
+          {project.lane && (
+            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 capitalize">
+              {project.lane}
+            </span>
+          )}
+          {project.tags && project.tags.map((tag) => (
+            <span
+              key={tag}
+              className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300"
+            >
+              {tag}
+            </span>
+          ))}
+        </div>
       </div>
     </Link>
   );

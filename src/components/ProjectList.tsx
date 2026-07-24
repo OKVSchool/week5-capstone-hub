@@ -10,11 +10,21 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
   const router = useRouter()
   const [query, setQuery] = useState("")
 
+  const existingTags = [...new Set(projects.flatMap(p => p.tags ?? []))]
+
   const filtered = [...projects]
     .sort((a, b) => b.date.localeCompare(a.date))
-    .filter(p =>
-      (p.title + " " + p.description).toLowerCase().includes(query.toLowerCase())
-    )
+    .filter(p => {
+      const q = query.toLowerCase()
+      if (!q) return true
+      return (
+        p.title.toLowerCase().includes(q) ||
+        p.description.toLowerCase().includes(q) ||
+        (p.framework ?? "").toLowerCase().includes(q) ||
+        (p.lane ?? "").toLowerCase().includes(q) ||
+        (p.tags ?? []).some(t => t.toLowerCase().includes(q))
+      )
+    })
 
   return (
     <>
@@ -22,7 +32,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
         {filtered.length} project{filtered.length !== 1 ? "s" : ""}, newest first
       </p>
 
-      <AddProjectForm onAdd={() => router.refresh()} />
+      <AddProjectForm onAdd={() => router.refresh()} existingTags={existingTags} />
 
       <input
         value={query}
