@@ -95,7 +95,7 @@ export default function ThoughtCard({
     const res = await fetch("/api/ideas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: pTitle, framework: pFramework, lane: pLane, text: pText }),
+      body: JSON.stringify({ title: pTitle, framework: pFramework, lane: pLane, text: pText, promotedFromThought: true }),
     })
     if (!res.ok) { const d = await res.json(); setPError(d.error ?? "Failed."); return }
     await fetch(`/api/thoughts/${thought.id}`, { method: "DELETE" })

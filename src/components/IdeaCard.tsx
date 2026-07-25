@@ -9,6 +9,7 @@ import type { Project } from "@/data/projects"
 import ThoughtCard from "./ThoughtCard"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
+import Crown from "./Crown"
 
 type Props = {
   idea: Idea
@@ -143,7 +144,8 @@ export default function IdeaCard({
           {idea.priority !== undefined && (
             <span className="ml-1 text-yellow-400 text-xs font-normal">{"★".repeat(idea.priority)}</span>
           )}
-          {count > 0 && <span className="ml-2 text-xs font-normal text-zinc-400">({count})</span>}
+          {idea.promotedFromThought && <Crown type="basic" />}
+          {count > 0 && <span className="ml-1 text-xs font-normal text-zinc-400">({count})</span>}
         </span>
         <div className="flex items-center gap-2 mx-2" onClick={e => e.stopPropagation()}>
           {isOpen && !isPinned && (

@@ -27,6 +27,7 @@ export async function POST(request: Request) {
     lane,
     createdAt: new Date().toISOString(),
     ...(text && { text }),
+    ...(body.promotedFromThought === true && { promotedFromThought: true }),
   }
 
   ideaStore.push(idea)

@@ -100,6 +100,8 @@ export async function POST(
     date,
     ...(body.repoUrl?.trim() && { repoUrl: body.repoUrl.trim() }),
     ...(idea.lane && { tags: [idea.lane] }),
+    promotedFromIdea: true,
+    ...(idea.promotedFromThought && { ideaWasFromThought: true }),
   }
 
   store.push(project)

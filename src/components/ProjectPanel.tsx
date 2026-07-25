@@ -11,6 +11,7 @@ import type { Lane } from "@/data/idea"
 import ThoughtCard from "./ThoughtCard"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
+import Crown from "./Crown"
 
 type Mode = "live" | "orphaned" | "archived"
 
@@ -65,6 +66,8 @@ export default function ProjectPanel({
   const moveReady = mTitle.trim() && mFramework.trim() && mLane
   const count = thoughts.length
   const livePriority = mode === "live" ? (project as Project).priority : undefined
+  const liveProject = mode === "live" ? (project as Project) : undefined
+  const crownType = liveProject?.ideaWasFromThought ? "ornate" : liveProject?.promotedFromIdea ? "basic" : undefined
 
   // Reset form + inner accordion when this panel closes
   useEffect(() => {
@@ -139,9 +142,10 @@ export default function ProjectPanel({
           {mode === "live" && livePriority !== undefined && (
             <span className="ml-1 text-yellow-400 text-xs font-normal">{"★".repeat(livePriority)}</span>
           )}
+          {crownType && <Crown type={crownType} />}
           {mode === "orphaned" && <span className="ml-2 text-xs font-normal opacity-70">(deleted)</span>}
           {mode === "archived" && <span className="ml-2 text-xs font-normal opacity-70">(archived)</span>}
-          {count > 0 && <span className="ml-2 text-xs font-normal text-zinc-400">({count})</span>}
+          {count > 0 && <span className="ml-1 text-xs font-normal text-zinc-400">({count})</span>}
         </span>
         <div className="flex items-center gap-2 mx-2" onClick={e => e.stopPropagation()}>
           {isOpen && !isPinned && (

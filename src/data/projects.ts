@@ -8,6 +8,8 @@ export type Project = {
   framework?: string;
   lane?: string;
   priority?: number;  // 1 (lowest) – 5 (highest)
+  promotedFromIdea?: boolean
+  ideaWasFromThought?: boolean
 };
 
 export const projects: Project[] = [

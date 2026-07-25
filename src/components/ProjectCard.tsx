@@ -1,11 +1,17 @@
 import Link from "next/link";
 import type { Project } from "@/data/projects";
+import Crown from "./Crown";
 
 export default function ProjectCard({ project }: { project: Project }) {
   return (
     <Link href={`/projects/${project.id}`} className="block rounded-lg border border-zinc-200 bg-white p-5 hover:border-zinc-400 dark:border-zinc-800 dark:bg-zinc-900 dark:hover:border-zinc-600">
-      <h2 className="font-semibold text-zinc-900 dark:text-zinc-50">
+      <h2 className="font-semibold text-zinc-900 dark:text-zinc-50 flex items-center">
         {project.title}
+        {project.ideaWasFromThought
+          ? <Crown type="ornate" />
+          : project.promotedFromIdea
+          ? <Crown type="basic" />
+          : null}
       </h2>
 
       <div className="hidden min-[645px]:block">

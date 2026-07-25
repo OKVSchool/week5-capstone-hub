@@ -10,4 +10,5 @@ export type Idea = {
   text?: string
   createdAt: string
   priority?: number   // 1 (lowest) – 5 (highest)
+  promotedFromThought?: boolean
 }
