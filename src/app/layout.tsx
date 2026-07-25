@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import NavBar from "@/components/NavBar"
+import { ToastProvider } from "@/lib/toast"
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -32,7 +33,9 @@ export default function RootLayout({
         <header className="border-b border-zinc-200 bg-white dark:border-zinc-800 dark:bg-zinc-950">
          <NavBar />
         </header>
-        <main className="flex-1">{children}</main>
+        <ToastProvider>
+          <main className="flex-1">{children}</main>
+        </ToastProvider>
       </body>
     </html>
   );

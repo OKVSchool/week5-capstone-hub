@@ -2,8 +2,10 @@
 import { useState } from "react"
 import { LANES } from "@/data/idea"
 import TagInput from "./TagInput"
+import { useToast } from "@/lib/toast"
 
 export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: () => void; existingTags?: string[] }) {
+  const { show } = useToast()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -38,6 +40,7 @@ export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: ()
     setLane("")
     setTags([])
     setError(null)
+    show("saved", "Project saved")
     setOpen(false)
     onAdd()
   }

@@ -6,6 +6,7 @@ import { getThoughtLabel, CATEGORIES } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
 import type { Project } from "@/data/projects"
 import StarRating from "./StarRating"
+import { useToast } from "@/lib/toast"
 
 type Props = {
   thought: Thought
@@ -36,6 +37,7 @@ export default function ThoughtCard({
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
   const router = useRouter()
+  const { show } = useToast()
   const [mode, setMode] = useState<Mode>("view")
 
   const [title, setTitle] = useState(thought.title ?? "")
@@ -66,12 +68,13 @@ export default function ThoughtCard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, category, text }),
     })
-    if (res.ok) { reset(); router.refresh() }
+    if (res.ok) { show("saved", "Thought saved"); reset(); router.refresh() }
     else { const d = await res.json(); setError(d.error ?? "Save failed.") }
   }
 
   async function confirmDelete() {
     await fetch(`/api/thoughts/${thought.id}`, { method: "DELETE" })
+    show("executed", "Thought deleted")
     router.refresh()
   }
 
@@ -84,7 +87,7 @@ export default function ThoughtCard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     })
-    if (res.ok) { reset(); router.refresh() }
+    if (res.ok) { show("saved", "Thought saved"); reset(); router.refresh() }
   }
 
   async function handlePromote() {
@@ -96,6 +99,7 @@ export default function ThoughtCard({
     })
     if (!res.ok) { const d = await res.json(); setPError(d.error ?? "Failed."); return }
     await fetch(`/api/thoughts/${thought.id}`, { method: "DELETE" })
+    show("promoted", "Promoted to Idea")
     router.refresh()
   }
 

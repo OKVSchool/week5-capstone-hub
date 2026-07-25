@@ -4,9 +4,11 @@ import { useRouter } from "next/navigation"
 import type { Project } from "@/data/projects"
 import { LANES } from "@/data/idea"
 import TagInput from "./TagInput"
+import { useToast } from "@/lib/toast"
 
 export default function EditProjectForm({ project, existingTags = [] }: { project: Project; existingTags?: string[] }) {
   const router = useRouter()
+  const { show } = useToast()
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(project.title)
   const [description, setDescription] = useState(project.description)
@@ -23,6 +25,7 @@ export default function EditProjectForm({ project, existingTags = [] }: { projec
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined, framework: framework || undefined, lane: lane || undefined, tags: tags.length ? tags : undefined }),
     })
+    show("saved", "Project saved")
     setOpen(false)
     router.refresh()
   }

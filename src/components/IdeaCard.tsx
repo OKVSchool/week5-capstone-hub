@@ -8,6 +8,7 @@ import { CATEGORIES } from "@/data/thoughts"
 import type { Project } from "@/data/projects"
 import ThoughtCard from "./ThoughtCard"
 import StarRating from "./StarRating"
+import { useToast } from "@/lib/toast"
 
 type Props = {
   idea: Idea
@@ -37,6 +38,7 @@ export default function IdeaCard({
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
   const router = useRouter()
+  const { show } = useToast()
   const [mode, setMode] = useState<Mode>("view")
 
   const [title, setTitle] = useState(idea.title)
@@ -94,12 +96,13 @@ export default function IdeaCard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, framework, lane, text }),
     })
-    if (res.ok) { reset(); router.refresh() }
+    if (res.ok) { show("saved", "Idea saved"); reset(); router.refresh() }
     else { const d = await res.json(); setError(d.error ?? "Save failed.") }
   }
 
   async function handleDelete() {
     await fetch(`/api/ideas/${idea.id}`, { method: "DELETE" })
+    show("executed", "Idea deleted")
     router.refresh()
   }
 
@@ -110,7 +113,7 @@ export default function IdeaCard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: pTitle, framework: pFramework, lane: pLane, date: pDate, repoUrl: pRepo, text: pText }),
     })
-    if (res.ok) { router.refresh() }
+    if (res.ok) { show("promoted", "Promoted to Project"); router.refresh() }
     else { const d = await res.json(); setPError(d.error ?? "Failed.") }
   }
 
@@ -122,7 +125,7 @@ export default function IdeaCard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ ideaId: idea.id, title: tTitle, category: tCategory, text: tText }),
     })
-    if (res.ok) { setTTitle(""); setTCategory(""); setTText(""); setTError(""); setMode("view"); router.refresh() }
+    if (res.ok) { show("saved", "Thought saved"); setTTitle(""); setTCategory(""); setTText(""); setTError(""); setMode("view"); router.refresh() }
     else { const d = await res.json(); setTError(d.error ?? "Failed.") }
   }
 

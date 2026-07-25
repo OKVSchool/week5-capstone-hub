@@ -7,6 +7,7 @@ import type { Thought } from "@/data/thoughts"
 import type { Project } from "@/data/projects"
 import IdeaCard from "./IdeaCard"
 import { getHighestAvailable, computeBumpChain, sortByPriority } from "@/lib/priority"
+import { useToast } from "@/lib/toast"
 
 type Props = {
   ideas: Idea[]
@@ -20,6 +21,7 @@ const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-
 
 export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props) {
   const router = useRouter()
+  const { show } = useToast()
   // Local copy so priority changes don't trigger router.refresh(), which would
   // reset the open/close state of every IdeaCard.
   const [localIdeas, setLocalIdeas] = useState(ideas)
@@ -99,7 +101,7 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
       body: JSON.stringify({ title, framework, lane, text }),
     })
     setSubmitting(false)
-    if (res.ok) { setTitle(""); setFramework(""); setLane(""); setText(""); setShowForm(false); router.refresh() }
+    if (res.ok) { show("saved", "Idea saved"); setTitle(""); setFramework(""); setLane(""); setText(""); setShowForm(false); router.refresh() }
     else { const d = await res.json(); setError(d.error ?? "Failed.") }
   }
 

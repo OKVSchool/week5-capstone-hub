@@ -10,6 +10,7 @@ import { LANES } from "@/data/idea"
 import type { Lane } from "@/data/idea"
 import ThoughtCard from "./ThoughtCard"
 import StarRating from "./StarRating"
+import { useToast } from "@/lib/toast"
 
 type Mode = "live" | "orphaned" | "archived"
 
@@ -40,6 +41,7 @@ export default function ProjectPanel({
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
   const router = useRouter()
+  const { show } = useToast()
   const [showForm, setShowForm] = useState(false)
   const [showMoveForm, setShowMoveForm] = useState(false)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
@@ -97,12 +99,13 @@ export default function ProjectPanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ projectId: project.id, title: tTitle, category: tCategory, text: tText }),
     })
-    if (res.ok) { setTTitle(""); setTCategory(""); setTText(""); setTError(""); setShowForm(false); router.refresh() }
+    if (res.ok) { show("saved", "Thought saved"); setTTitle(""); setTCategory(""); setTText(""); setTError(""); setShowForm(false); router.refresh() }
     else { const d = await res.json(); setTError(d.error ?? "Failed.") }
   }
 
   async function handleDeleteAll() {
     await fetch(`/api/removed-projects/${project.id}`, { method: "DELETE" })
+    show("executed", "Project deleted")
     router.refresh()
   }
 
@@ -114,7 +117,7 @@ export default function ProjectPanel({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: mTitle, framework: mFramework, lane: mLane, text: mText }),
     })
-    if (res.ok) { router.refresh() }
+    if (res.ok) { show("saved", "Moved to Ideas"); router.refresh() }
     else { const d = await res.json(); setMError(d.error ?? "Failed.") }
   }
 
