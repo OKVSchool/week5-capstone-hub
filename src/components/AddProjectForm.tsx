@@ -1,6 +1,6 @@
 'use client'
 import { useState } from "react"
-import { LANES } from "@/data/idea"
+import { PROJECT_LANES } from "@/data/projects"
 import TagInput from "./TagInput"
 import { useToast } from "@/lib/toast"
 
@@ -12,7 +12,7 @@ export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: ()
   const [date, setDate] = useState("")
   const [repoUrl, setRepoUrl] = useState("")
   const [framework, setFramework] = useState("")
-  const [lane, setLane] = useState("")
+  const [lanes, setLanes] = useState<string[]>([])
   const [tags, setTags] = useState<string[]>([])
   const [error, setError] = useState<string | null>(null)
 
@@ -23,7 +23,7 @@ export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: ()
     const res = await fetch("/api/projects", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined, framework: framework || undefined, lane: lane || undefined, tags: tags.length ? tags : undefined }),
+      body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined, framework: framework || undefined, lanes: lanes.length ? lanes : undefined, tags: tags.length ? tags : undefined }),
     })
 
     if (!res.ok) {
@@ -37,7 +37,7 @@ export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: ()
     setDate("")
     setRepoUrl("")
     setFramework("")
-    setLane("")
+    setLanes([])
     setTags([])
     setError(null)
     show("saved", "Project saved")
@@ -99,14 +99,19 @@ export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: ()
         onChange={e => setFramework(e.target.value)}
         className="rounded border px-3 py-2 text-sm"
       />
-      <select
-        value={lane}
-        onChange={e => setLane(e.target.value)}
-        className="rounded border px-3 py-2 text-sm text-zinc-700 dark:text-zinc-300 bg-white dark:bg-zinc-900"
-      >
-        <option value="">Lane (optional)</option>
-        {LANES.map(l => <option key={l} value={l}>{l}</option>)}
-      </select>
+      <div className="rounded border px-3 py-2 space-y-1">
+        <p className="text-xs text-zinc-400 mb-1">Lane (optional — pick any that apply)</p>
+        {PROJECT_LANES.map(l => (
+          <label key={l} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={lanes.includes(l)}
+              onChange={e => setLanes(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))}
+            />
+            {l}
+          </label>
+        ))}
+      </div>
       <TagInput tags={tags} onChange={setTags} existingTags={existingTags} />
       <input
         placeholder="Repo URL (optional)"

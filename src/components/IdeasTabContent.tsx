@@ -32,7 +32,7 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
   const [showForm, setShowForm] = useState(false)
   const [title, setTitle] = useState("")
   const [framework, setFramework] = useState("")
-  const [lane, setLane] = useState<Lane | "">("")
+  const [lanes, setLanes] = useState<Lane[]>([])
   const [text, setText] = useState("")
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
@@ -54,7 +54,7 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
     setPinnedIds(prev => { const n = new Set(prev); n.delete(id); return n })
   }
 
-  const formReady = title.trim() && framework.trim() && lane
+  const formReady = title.trim() && framework.trim() && lanes.length > 0
   const takenLevels = new Set(localIdeas.map(i => i.priority).filter((p): p is number => p !== undefined))
   const autoAssignLevel = takenLevels.size < 5 ? getHighestAvailable(localIdeas) : undefined
 
@@ -65,7 +65,7 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
         return (
           i.title.toLowerCase().includes(q) ||
           i.framework.toLowerCase().includes(q) ||
-          i.lane.toLowerCase().includes(q) ||
+          i.lanes.some(l => l.toLowerCase().includes(q)) ||
           i.text?.toLowerCase().includes(q)
         )
       })
@@ -98,10 +98,10 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
     const res = await fetch("/api/ideas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, framework, lane, text }),
+      body: JSON.stringify({ title, framework, lanes, text }),
     })
     setSubmitting(false)
-    if (res.ok) { show("saved", "Idea saved"); setTitle(""); setFramework(""); setLane(""); setText(""); setShowForm(false); router.refresh() }
+    if (res.ok) { show("saved", "Idea saved"); setTitle(""); setFramework(""); setLanes([]); setText(""); setShowForm(false); router.refresh() }
     else { const d = await res.json(); setError(d.error ?? "Failed.") }
   }
 
@@ -117,10 +117,16 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
         <form onSubmit={handleSubmit} className="space-y-2 rounded border border-zinc-200 dark:border-zinc-700 p-4">
           <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (required)" className={INPUT} />
           <input type="text" value={framework} onChange={(e) => setFramework(e.target.value)} placeholder="Framework (required)" className={INPUT} />
-          <select value={lane} onChange={(e) => setLane(e.target.value as Lane | "")} className={INPUT}>
-            <option value="">Lane (required)</option>
-            {LANES.map((l) => <option key={l} value={l}>{l}</option>)}
-          </select>
+          <div className="rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 space-y-1">
+            <p className="text-xs text-zinc-400 mb-1">Lane (pick any that apply)</p>
+            {LANES.map(l => (
+              <label key={l} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer capitalize">
+                <input type="checkbox" checked={lanes.includes(l)}
+                  onChange={e => setLanes(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} />
+                {l}
+              </label>
+            ))}
+          </div>
           <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Notes (optional)" rows={3} className={INPUT} />
           {error && <p className="text-xs text-red-500">{error}</p>}
           <div className="flex gap-2">

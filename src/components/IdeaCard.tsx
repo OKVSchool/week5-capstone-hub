@@ -3,6 +3,7 @@ import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Idea, Lane } from "@/data/idea"
 import { LANES } from "@/data/idea"
+import { PROJECT_LANES } from "@/data/projects"
 import type { Thought, Category } from "@/data/thoughts"
 import { CATEGORIES } from "@/data/thoughts"
 import type { Project } from "@/data/projects"
@@ -44,13 +45,13 @@ export default function IdeaCard({
 
   const [title, setTitle] = useState(idea.title)
   const [framework, setFramework] = useState(idea.framework)
-  const [lane, setLane] = useState<Lane>(idea.lane)
+  const [lanes, setLanes] = useState<Lane[]>(idea.lanes)
   const [text, setText] = useState(idea.text ?? "")
   const [error, setError] = useState("")
 
   const [pTitle, setPTitle] = useState(idea.title)
   const [pFramework, setPFramework] = useState(idea.framework)
-  const [pLane, setPLane] = useState<Lane>(idea.lane)
+  const [pLanes, setPLanes] = useState<string[]>(idea.lanes)
   const [pDate, setPDate] = useState("")
   const [pRepo, setPRepo] = useState("")
   const [pText, setPText] = useState(idea.text ?? "")
@@ -66,7 +67,7 @@ export default function IdeaCard({
   const [innerPinnedIds, setInnerPinnedIds] = useState<Set<string>>(new Set())
 
   const thoughtBlank = !tTitle.trim() && !tCategory && !tText.trim()
-  const promoteReady = pTitle.trim() && pFramework.trim() && pLane && pDate.trim()
+  const promoteReady = pTitle.trim() && pFramework.trim() && pLanes.length > 0 && pDate.trim()
 
   function reset() { setMode("view"); setError(""); setPError(""); setTError("") }
 
@@ -95,7 +96,7 @@ export default function IdeaCard({
     const res = await fetch(`/api/ideas/${idea.id}`, {
       method: "PATCH",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, framework, lane, text }),
+      body: JSON.stringify({ title, framework, lanes, text }),
     })
     if (res.ok) { show("saved", "Idea saved"); reset(); router.refresh() }
     else { const d = await res.json(); setError(d.error ?? "Save failed.") }
@@ -112,7 +113,7 @@ export default function IdeaCard({
     const res = await fetch(`/api/ideas/${idea.id}?action=promote`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: pTitle, framework: pFramework, lane: pLane, date: pDate, repoUrl: pRepo, text: pText }),
+      body: JSON.stringify({ title: pTitle, framework: pFramework, lanes: pLanes, date: pDate, repoUrl: pRepo, text: pText }),
     })
     if (res.ok) { show("promoted", "Promoted to Project"); router.refresh() }
     else { const d = await res.json(); setPError(d.error ?? "Failed.") }
@@ -141,10 +142,10 @@ export default function IdeaCard({
       >
         <span className="flex-1 text-left text-sm font-medium text-zinc-800 dark:text-zinc-200">
           {idea.title}
+          {idea.promotedFromThought && <Crown type="basic" />}
           {idea.priority !== undefined && (
             <span className="ml-1 text-yellow-400 text-xs font-normal">{"★".repeat(idea.priority)}</span>
           )}
-          {idea.promotedFromThought && <Crown type="basic" />}
           {count > 0 && <span className="ml-1 text-xs font-normal text-zinc-400">({count})</span>}
         </span>
         <div className="flex items-center gap-2 mx-2" onClick={e => e.stopPropagation()}>
@@ -174,7 +175,12 @@ export default function IdeaCard({
                   <div><p className="text-xs text-zinc-400 uppercase tracking-wide">Framework</p>
                     <p className="text-zinc-800 dark:text-zinc-200">{idea.framework}</p></div>
                   <div><p className="text-xs text-zinc-400 uppercase tracking-wide">Lane</p>
-                    <p className="text-zinc-800 dark:text-zinc-200 capitalize">{idea.lane}</p></div>
+                    <div className="flex flex-wrap gap-1 mt-0.5">
+                      {idea.lanes.map(l => (
+                        <span key={l} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-700 dark:text-zinc-300 capitalize">{l}</span>
+                      ))}
+                    </div>
+                  </div>
                 </div>
                 {idea.text && (
                   <div><p className="text-xs text-zinc-400 uppercase tracking-wide">Notes</p>
@@ -258,10 +264,16 @@ export default function IdeaCard({
               <div className="space-y-2">
                 <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (required)" className={INPUT} />
                 <input type="text" value={framework} onChange={(e) => setFramework(e.target.value)} placeholder="Framework (required)" className={INPUT} />
-                <select value={lane} onChange={(e) => setLane(e.target.value as Lane)} className={INPUT}>
-                  <option value="">Lane (required)</option>
-                  {LANES.map((l) => <option key={l} value={l}>{l}</option>)}
-                </select>
+                <div className="rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 space-y-1">
+                  <p className="text-xs text-zinc-400 mb-1">Lane (pick any that apply)</p>
+                  {LANES.map(l => (
+                    <label key={l} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer capitalize">
+                      <input type="checkbox" checked={lanes.includes(l)}
+                        onChange={e => setLanes(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} />
+                      {l}
+                    </label>
+                  ))}
+                </div>
                 <textarea value={text} onChange={(e) => setText(e.target.value)} placeholder="Notes (optional)" rows={3} className={INPUT} />
               </div>
               {error && <p className="text-xs text-red-500">{error}</p>}
@@ -278,10 +290,16 @@ export default function IdeaCard({
               <div className="space-y-2">
                 <input type="text" value={pTitle} onChange={(e) => setPTitle(e.target.value)} placeholder="Title (required)" className={INPUT} />
                 <input type="text" value={pFramework} onChange={(e) => setPFramework(e.target.value)} placeholder="Framework (required)" className={INPUT} />
-                <select value={pLane} onChange={(e) => setPLane(e.target.value as Lane)} className={INPUT}>
-                  <option value="">Lane (required)</option>
-                  {LANES.map((l) => <option key={l} value={l}>{l}</option>)}
-                </select>
+                <div className="rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 space-y-1">
+                  <p className="text-xs text-zinc-400 mb-1">Lane (pick any that apply)</p>
+                  {PROJECT_LANES.map(l => (
+                    <label key={l} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer capitalize">
+                      <input type="checkbox" checked={pLanes.includes(l)}
+                        onChange={e => setPLanes(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} />
+                      {l}
+                    </label>
+                  ))}
+                </div>
                 <div className="flex gap-2 items-center">
                   <input type="date" value={pDate} onChange={(e) => setPDate(e.target.value)} className={INPUT} />
                   <button type="button" onClick={() => setPDate(new Date().toISOString().split("T")[0])} className="rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-500 hover:bg-zinc-50 hover:text-zinc-800 dark:border-zinc-600 dark:hover:bg-zinc-800 dark:hover:text-zinc-200 whitespace-nowrap">Today</button>

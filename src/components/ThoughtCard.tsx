@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation"
 import type { Thought, Category } from "@/data/thoughts"
 import { getThoughtLabel, CATEGORIES } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
+import { LANES } from "@/data/idea"
 import type { Project } from "@/data/projects"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
@@ -47,14 +48,14 @@ export default function ThoughtCard({
 
   const [pTitle, setPTitle] = useState(thought.title ?? "")
   const [pFramework, setPFramework] = useState("")
-  const [pLane, setPLane] = useState("")
+  const [pLanes, setPLanes] = useState<string[]>([])
   const [pText, setPText] = useState(thought.text ?? "")
   const [pError, setPError] = useState("")
 
   const [moveSection, setMoveSection] = useState<"" | "standalone" | "ideas" | "projects">("")
 
   const editBlank = !title.trim() && !category && !text.trim()
-  const promoteReady = pTitle.trim() && pFramework.trim() && pLane
+  const promoteReady = pTitle.trim() && pFramework.trim() && pLanes.length > 0
 
   function reset() { setMode("view"); setError(""); setPError(""); setMoveSection("") }
 
@@ -95,7 +96,7 @@ export default function ThoughtCard({
     const res = await fetch("/api/ideas", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: pTitle, framework: pFramework, lane: pLane, text: pText, promotedFromThought: true }),
+      body: JSON.stringify({ title: pTitle, framework: pFramework, lanes: pLanes, text: pText, promotedFromThought: true }),
     })
     if (!res.ok) { const d = await res.json(); setPError(d.error ?? "Failed."); return }
     await fetch(`/api/thoughts/${thought.id}`, { method: "DELETE" })
@@ -249,14 +250,20 @@ export default function ThoughtCard({
 
           {mode === "promote" && (
             <>
-              <p className="text-xs text-zinc-500">A thought becomes an Idea when it has a title, framework, and lane.</p>
+              <p className="text-xs text-zinc-500">A thought becomes an Idea when it has a title, framework, and at least one lane.</p>
               <div className="space-y-2">
                 <input type="text" value={pTitle} onChange={(e) => setPTitle(e.target.value)} placeholder="Title (required)" className={INPUT} />
                 <input type="text" value={pFramework} onChange={(e) => setPFramework(e.target.value)} placeholder="Framework (required)" className={INPUT} />
-                <select value={pLane} onChange={(e) => setPLane(e.target.value)} className={INPUT}>
-                  <option value="">Lane (required)</option>
-                  {["content site", "web app", "mobile app"].map((l) => <option key={l} value={l}>{l}</option>)}
-                </select>
+                <div className="rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 space-y-1">
+                  <p className="text-xs text-zinc-400 mb-1">Lane (pick any that apply)</p>
+                  {LANES.map(l => (
+                    <label key={l} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer capitalize">
+                      <input type="checkbox" checked={pLanes.includes(l)}
+                        onChange={e => setPLanes(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} />
+                      {l}
+                    </label>
+                  ))}
+                </div>
                 <textarea value={pText} onChange={(e) => setPText(e.target.value)} placeholder="Notes (optional)" rows={3} className={INPUT} />
               </div>
               {pError && <p className="text-xs text-red-500">{pError}</p>}

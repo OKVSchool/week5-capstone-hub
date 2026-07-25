@@ -22,18 +22,18 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
             </h1>
             <p className="mt-1 text-sm text-zinc-500">{project.date}</p>
             <p className="mt-4 text-zinc-700 dark:text-zinc-300">{project.description}</p>
-            {(project.framework || project.lane) && (
+            {(project.framework || project.lanes?.length) && (
               <div className="mt-3 flex flex-wrap gap-2">
                 {project.framework && (
                   <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300">
                     {project.framework}
                   </span>
                 )}
-                {project.lane && (
-                  <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 capitalize">
-                    {project.lane}
+                {project.lanes?.map(l => (
+                  <span key={l} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 capitalize">
+                    {l}
                   </span>
-                )}
+                ))}
               </div>
             )}
             {project.repoUrl && (

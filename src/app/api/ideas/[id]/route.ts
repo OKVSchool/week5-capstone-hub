@@ -3,6 +3,7 @@ import { thoughtStore } from "@/lib/thoughtStore"
 import { store } from "@/lib/store"
 import type { Lane } from "@/data/idea"
 import { LANES } from "@/data/idea"
+import { PROJECT_LANES } from "@/data/projects"
 import type { Project } from "@/data/projects"
 
 export async function PATCH(
@@ -15,7 +16,7 @@ export async function PATCH(
 
   const body = await request.json()
   const hasPriority = "priority" in body
-  const hasContent = body.title !== undefined || body.framework !== undefined || body.lane !== undefined
+  const hasContent = body.title !== undefined || body.framework !== undefined || body.lanes !== undefined
 
   if (!hasPriority && !hasContent) {
     return Response.json({ error: "Nothing to update." }, { status: 400 })
@@ -24,12 +25,14 @@ export async function PATCH(
   if (hasContent) {
     const title = body.title?.trim() ?? ""
     const framework = body.framework?.trim() ?? ""
-    const lane: Lane | "" = LANES.includes(body.lane) ? body.lane : ""
+    const lanes: Lane[] = Array.isArray(body.lanes)
+      ? body.lanes.filter((l: unknown) => LANES.includes(l as Lane))
+      : []
     const text = body.text?.trim() ?? ""
 
-    if (!title || !framework || !lane) {
+    if (!title || !framework || lanes.length === 0) {
       return Response.json(
-        { error: "Title, framework, and lane are all required." },
+        { error: "Title, framework, and at least one lane are required." },
         { status: 400 }
       )
     }
@@ -38,7 +41,7 @@ export async function PATCH(
       ...ideaStore[idx],
       title,
       framework,
-      lane,
+      lanes,
       text: text || undefined,
     }
   }
@@ -93,13 +96,17 @@ export async function POST(
     return Response.json({ error: "Date started is required." }, { status: 400 })
   }
 
+  const projectLanes: string[] = Array.isArray(body.lanes) && body.lanes.length > 0
+    ? body.lanes.filter((l: unknown) => PROJECT_LANES.includes(l as typeof PROJECT_LANES[number]))
+    : idea.lanes
+
   const project: Project = {
     id: crypto.randomUUID(),
     title: body.title?.trim() || idea.title,
     description: idea.text?.trim() || idea.framework,
     date,
     ...(body.repoUrl?.trim() && { repoUrl: body.repoUrl.trim() }),
-    ...(idea.lane && { tags: [idea.lane] }),
+    ...(projectLanes.length > 0 && { lanes: projectLanes }),
     promotedFromIdea: true,
     ...(idea.promotedFromThought && { ideaWasFromThought: true }),
   }

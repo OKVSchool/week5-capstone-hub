@@ -27,11 +27,11 @@ export default function ProjectCard({ project }: { project: Project }) {
               {project.framework}
             </span>
           )}
-          {project.lane && (
-            <span className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 capitalize">
-              {project.lane}
+          {project.lanes?.map(l => (
+            <span key={l} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 capitalize">
+              {l}
             </span>
-          )}
+          ))}
           {project.tags && project.tags.map((tag) => (
             <span
               key={tag}

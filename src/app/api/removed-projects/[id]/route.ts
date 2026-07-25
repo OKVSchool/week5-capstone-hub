@@ -42,12 +42,14 @@ export async function POST(
   const body = await request.json()
   const title = body.title?.trim() ?? ""
   const framework = body.framework?.trim() ?? ""
-  const lane: Lane | "" = LANES.includes(body.lane) ? body.lane : ""
+  const lanes: Lane[] = Array.isArray(body.lanes)
+    ? body.lanes.filter((l: unknown) => LANES.includes(l as Lane))
+    : []
   const text = body.text?.trim() ?? ""
 
-  if (!title || !framework || !lane) {
+  if (!title || !framework || lanes.length === 0) {
     return Response.json(
-      { error: "Title, framework, and lane are all required." },
+      { error: "Title, framework, and at least one lane are required." },
       { status: 400 }
     )
   }
@@ -56,7 +58,7 @@ export async function POST(
     id: crypto.randomUUID(),
     title,
     framework,
-    lane,
+    lanes,
     createdAt: new Date().toISOString(),
     ...(text && { text }),
   }

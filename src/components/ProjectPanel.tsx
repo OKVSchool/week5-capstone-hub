@@ -54,7 +54,7 @@ export default function ProjectPanel({
 
   const [mTitle, setMTitle] = useState(project.title)
   const [mFramework, setMFramework] = useState("")
-  const [mLane, setMLane] = useState<Lane | "">("")
+  const [mLanes, setMLanes] = useState<Lane[]>([])
   const [mText, setMText] = useState(("description" in project ? project.description : "") ?? "")
   const [mError, setMError] = useState("")
 
@@ -63,7 +63,7 @@ export default function ProjectPanel({
   const [innerPinnedIds, setInnerPinnedIds] = useState<Set<string>>(new Set())
 
   const thoughtBlank = !tTitle.trim() && !tCategory && !tText.trim()
-  const moveReady = mTitle.trim() && mFramework.trim() && mLane
+  const moveReady = mTitle.trim() && mFramework.trim() && mLanes.length > 0
   const count = thoughts.length
   const livePriority = mode === "live" ? (project as Project).priority : undefined
   const liveProject = mode === "live" ? (project as Project) : undefined
@@ -79,6 +79,7 @@ export default function ProjectPanel({
       setMError("")
       setInnerOpenId(null)
       setInnerPinnedIds(new Set())
+      setMLanes([])
     }
   }, [isOpen])
 
@@ -114,11 +115,11 @@ export default function ProjectPanel({
 
   async function handleMoveToIdeas(e: React.FormEvent) {
     e.preventDefault()
-    if (!moveReady) { setMError("Title, framework, and lane are all required."); return }
+    if (!moveReady) { setMError("Title, framework, and at least one lane are required."); return }
     const res = await fetch(`/api/removed-projects/${project.id}?action=move-to-idea`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: mTitle, framework: mFramework, lane: mLane, text: mText }),
+      body: JSON.stringify({ title: mTitle, framework: mFramework, lanes: mLanes, text: mText }),
     })
     if (res.ok) { show("saved", "Moved to Ideas"); router.refresh() }
     else { const d = await res.json(); setMError(d.error ?? "Failed.") }
@@ -139,10 +140,10 @@ export default function ProjectPanel({
       >
         <span className={`flex-1 text-left ${titleClass}`}>
           {project.title}
+          {crownType && <Crown type={crownType} />}
           {mode === "live" && livePriority !== undefined && (
             <span className="ml-1 text-yellow-400 text-xs font-normal">{"★".repeat(livePriority)}</span>
           )}
-          {crownType && <Crown type={crownType} />}
           {mode === "orphaned" && <span className="ml-2 text-xs font-normal opacity-70">(deleted)</span>}
           {mode === "archived" && <span className="ml-2 text-xs font-normal opacity-70">(archived)</span>}
           {count > 0 && <span className="ml-1 text-xs font-normal text-zinc-400">({count})</span>}
@@ -230,10 +231,16 @@ export default function ProjectPanel({
               <p className="text-xs text-zinc-500">Fill in required fields to move this project to Ideas.</p>
               <input type="text" value={mTitle} onChange={(e) => setMTitle(e.target.value)} placeholder="Title (required)" className={INPUT} />
               <input type="text" value={mFramework} onChange={(e) => setMFramework(e.target.value)} placeholder="Framework (required)" className={INPUT} />
-              <select value={mLane} onChange={(e) => setMLane(e.target.value as Lane | "")} className={INPUT}>
-                <option value="">Lane (required)</option>
-                {LANES.map((l) => <option key={l} value={l}>{l}</option>)}
-              </select>
+              <div className="rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 space-y-1">
+                <p className="text-xs text-zinc-400 mb-1">Lane (pick any that apply)</p>
+                {LANES.map(l => (
+                  <label key={l} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer capitalize">
+                    <input type="checkbox" checked={mLanes.includes(l)}
+                      onChange={e => setMLanes(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} />
+                    {l}
+                  </label>
+                ))}
+              </div>
               <textarea value={mText} onChange={(e) => setMText(e.target.value)} placeholder="Notes (optional)" rows={3} className={INPUT} />
               {mError && <p className="text-xs text-red-500">{mError}</p>}
               <div className="flex gap-2">

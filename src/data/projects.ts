@@ -1,3 +1,5 @@
+export const PROJECT_LANES = ["content site", "web app", "mobile app", "server", "database"] as const
+
 export type Project = {
   id: string;
   title: string;
@@ -10,6 +12,7 @@ export type Project = {
   priority?: number;  // 1 (lowest) – 5 (highest)
   promotedFromIdea?: boolean
   ideaWasFromThought?: boolean
+  lanes?: string[]
 };
 
 export const projects: Project[] = [

@@ -58,7 +58,7 @@ export default function ProjectsTab({ liveProjects, removedProjects, thoughts, i
     ? localProjects.filter((p) =>
         p.title.toLowerCase().includes(q) ||
         p.framework?.toLowerCase().includes(q) ||
-        p.lane?.toLowerCase().includes(q)
+        p.lanes?.some(l => l.toLowerCase().includes(q))
       )
     : localProjects
 

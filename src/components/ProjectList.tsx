@@ -21,7 +21,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
         p.title.toLowerCase().includes(q) ||
         p.description.toLowerCase().includes(q) ||
         (p.framework ?? "").toLowerCase().includes(q) ||
-        (p.lane ?? "").toLowerCase().includes(q) ||
+        (p.lanes ?? []).some(l => l.toLowerCase().includes(q)) ||
         (p.tags ?? []).some(t => t.toLowerCase().includes(q))
       )
     })

@@ -23,7 +23,7 @@ export async function POST(request: Request) {
     ...(body.repoUrl && { repoUrl: body.repoUrl }),
     ...(body.tags && { tags: body.tags }),
     ...(body.framework?.trim() && { framework: body.framework.trim() }),
-    ...(body.lane?.trim() && { lane: body.lane.trim() }),
+    ...(Array.isArray(body.lanes) && body.lanes.length > 0 && { lanes: body.lanes }),
   }
 
   store.push(newProject)
