@@ -41,6 +41,7 @@ export default function IdeaCard({
 }: Props) {
   const router = useRouter()
   const { show } = useToast()
+  const API = process.env.NEXT_PUBLIC_API_URL
   const [mode, setMode] = useState<Mode>("view")
 
   const [title, setTitle] = useState(idea.title)
@@ -93,8 +94,8 @@ export default function IdeaCard({
   }
 
   async function handleSave() {
-    const res = await fetch(`/api/ideas/${idea.id}`, {
-      method: "PATCH",
+    const res = await fetch(`${API}/ideas/${idea.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, framework, lanes, text }),
     })
@@ -103,14 +104,14 @@ export default function IdeaCard({
   }
 
   async function handleDelete() {
-    await fetch(`/api/ideas/${idea.id}`, { method: "DELETE" })
+    await fetch(`${API}/ideas/${idea.id}`, { method: "DELETE" })
     show("executed", "Idea deleted")
     router.refresh()
   }
 
   async function handlePromote() {
     if (!promoteReady) { setPError("All required fields must be filled."); return }
-    const res = await fetch(`/api/ideas/${idea.id}?action=promote`, {
+    const res = await fetch(`${API}/ideas/${idea.id}/promote`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: pTitle, framework: pFramework, lanes: pLanes, date: pDate, repoUrl: pRepo, text: pText }),
@@ -122,10 +123,10 @@ export default function IdeaCard({
   async function handleAddThought(e: React.FormEvent) {
     e.preventDefault()
     if (thoughtBlank) { setTError("At least one field is required."); return }
-    const res = await fetch("/api/thoughts", {
+    const res = await fetch(`${API}/thoughts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ideaId: idea.id, title: tTitle, category: tCategory, text: tText }),
+      body: JSON.stringify({ ideaId: idea.id, title: tTitle || undefined, category: tCategory || undefined, text: tText || undefined }),
     })
     if (res.ok) { show("saved", "Thought saved"); setTTitle(""); setTCategory(""); setTText(""); setTError(""); setMode("view"); router.refresh() }
     else { const d = await res.json(); setTError(d.error ?? "Failed.") }

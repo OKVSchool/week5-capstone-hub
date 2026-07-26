@@ -9,6 +9,7 @@ import { useToast } from "@/lib/toast"
 export default function EditProjectForm({ project, existingTags = [] }: { project: Project; existingTags?: string[] }) {
   const router = useRouter()
   const { show } = useToast()
+  const API = process.env.NEXT_PUBLIC_API_URL
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState(project.title)
   const [description, setDescription] = useState(project.description)
@@ -20,8 +21,8 @@ export default function EditProjectForm({ project, existingTags = [] }: { projec
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    await fetch(`/api/projects/${project.id}`, {
-      method: "PATCH",
+    await fetch(`${API}/projects/${project.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined, framework: framework || undefined, lanes: lanes.length ? lanes : undefined, tags: tags.length ? tags : undefined }),
     })

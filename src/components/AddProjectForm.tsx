@@ -6,6 +6,7 @@ import { useToast } from "@/lib/toast"
 
 export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: () => void; existingTags?: string[] }) {
   const { show } = useToast()
+  const API = process.env.NEXT_PUBLIC_API_URL
   const [open, setOpen] = useState(false)
   const [title, setTitle] = useState("")
   const [description, setDescription] = useState("")
@@ -20,7 +21,7 @@ export default function AddProjectForm({ onAdd, existingTags = [] }: { onAdd: ()
     e.preventDefault()
     setError(null)
 
-    const res = await fetch("/api/projects", {
+    const res = await fetch(`${API}/projects`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, description, date, repoUrl: repoUrl || undefined, framework: framework || undefined, lanes: lanes.length ? lanes : undefined, tags: tags.length ? tags : undefined }),

@@ -8,32 +8,28 @@ type Step = "idle" | "confirm-cascade" | "confirm-archive"
 export default function DeleteButton({ project }: { project: Project }) {
   const router = useRouter()
   const [step, setStep] = useState<Step>("idle")
+  const API = process.env.NEXT_PUBLIC_API_URL
 
   async function handleCascade() {
-    // Delete project + all attached thoughts
-    await fetch(`/api/projects/${project.id}?cascade=true`, { method: "DELETE" })
+    await fetch(`${API}/projects/${project.id}`, { method: "DELETE" })
     router.push("/")
   }
 
   async function handleArchive() {
-    // Move to archive in Ideas tab, keep thoughts
-    await fetch("/api/removed-projects", {
-      method: "POST",
+    await fetch(`${API}/projects/${project.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...project, state: "archived" }),
+      body: JSON.stringify({ status: "archived" }),
     })
-    await fetch(`/api/projects/${project.id}`, { method: "DELETE" })
     router.push("/")
   }
 
   async function handleOrphan() {
-    // Keep in Ideas tab as orphaned (red), keep thoughts
-    await fetch("/api/removed-projects", {
-      method: "POST",
+    await fetch(`${API}/projects/${project.id}`, {
+      method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ ...project, state: "orphaned" }),
+      body: JSON.stringify({ status: "orphaned" }),
     })
-    await fetch(`/api/projects/${project.id}`, { method: "DELETE" })
     router.push("/")
   }
 

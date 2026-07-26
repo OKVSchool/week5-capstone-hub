@@ -1,14 +1,22 @@
-import { store } from "@/lib/store"
 import { notFound } from "next/navigation"
 import Link from "next/link"
+import type { Project } from "@/data/projects"
 import DeleteButton from "@/components/DeleteButton"
 import EditProjectForm from "@/components/EditProjectForm"
+import TaskList from "@/components/TaskList"
 
 export default async function ProjectPage({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params
-    const project = store.find(p => p.id === id)
-    if (!project) notFound()
-    const existingTags = [...new Set(store.filter(p => p.id !== id).flatMap(p => p.tags ?? []))]
+    const [projectRes, allRes, tasksRes] = await Promise.all([
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects/${id}`, { cache: 'no-store' }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/projects`, { cache: 'no-store' }),
+      fetch(`${process.env.NEXT_PUBLIC_API_URL}/tasks?projectId=${id}`, { cache: 'no-store' }),
+    ])
+    if (!projectRes.ok) notFound()
+    const project = await projectRes.json()
+    const allProjects = await allRes.json()
+    const tasks = await tasksRes.json()
+    const existingTags = [...new Set((allProjects as Project[]).filter((p) => p.id !== id).flatMap((p) => p.tags ?? []))]
     return (
         <div className="mx-auto max-w-4xl px-6 py-12">
             <Link
@@ -47,6 +55,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
               </a>
             )}
             <EditProjectForm project={project} existingTags={existingTags} />
+            <TaskList tasks={tasks} projectId={id} />
             <DeleteButton project={project} />
         </div>
     )

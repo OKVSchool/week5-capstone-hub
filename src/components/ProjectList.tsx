@@ -13,7 +13,7 @@ export default function ProjectList({ projects }: { projects: Project[] }) {
   const existingTags = [...new Set(projects.flatMap(p => p.tags ?? []))]
 
   const filtered = [...projects]
-    .sort((a, b) => b.date.localeCompare(a.date))
+    .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
     .filter(p => {
       const q = query.toLowerCase()
       if (!q) return true

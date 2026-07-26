@@ -1,6 +1,7 @@
 'use client'
 import { useState, useEffect } from "react"
 import type { Project } from "@/data/projects"
+import { API } from "@/lib/api"
 
 type State =
   | { status: "loading" }
@@ -14,7 +15,7 @@ export default function FetchWidget() {
   async function load() {
     setState({ status: "loading" })
     try {
-      const res = await fetch("/api/projects")
+      const res = await fetch(`${API}/projects?status=active`)
       if (!res.ok) throw new Error(`${res.status} ${res.statusText}`)
       const data: Project[] = await res.json()
       setState(data.length === 0 ? { status: "empty" } : { status: "data", projects: data })
@@ -41,7 +42,7 @@ export default function FetchWidget() {
 
       <div className="mt-3">
         {state.status === "loading" && (
-          <p className="text-sm text-zinc-400 animate-pulse">Fetching from /api/projects…</p>
+          <p className="text-sm text-zinc-400 animate-pulse">Fetching from /projects…</p>
         )}
         {state.status === "error" && (
           <p className="text-sm text-red-500">Error: {state.message}</p>

@@ -9,9 +9,12 @@ export default function ProjectCard({ project }: { project: Project }) {
         {project.title}
         {project.ideaWasFromThought
           ? <Crown type="ornate" />
-          : project.promotedFromIdea
+          : project.promotedFromIdeaId
           ? <Crown type="basic" />
           : null}
+        {project.priority !== undefined && (
+          <span className="ml-2 text-yellow-400 text-xs font-normal">{"★".repeat(project.priority)}</span>
+        )}
       </h2>
 
       <div className="hidden min-[645px]:block">

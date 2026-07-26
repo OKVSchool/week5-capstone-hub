@@ -22,6 +22,7 @@ const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-
 export default function ThoughtsTab({ thoughts, ideas, liveProjects }: Props) {
   const router = useRouter()
   const { show } = useToast()
+  const API = process.env.NEXT_PUBLIC_API_URL
   // Local copy of thoughts so priority changes don't trigger router.refresh(),
   // which would reset the open/close state of every ThoughtCard.
   const [localThoughts, setLocalThoughts] = useState(thoughts)
@@ -80,8 +81,8 @@ export default function ThoughtsTab({ thoughts, ideas, liveProjects }: Props) {
     )
 
     for (const [affectedId, priority] of changes) {
-      await fetch(`/api/thoughts/${affectedId}`, {
-        method: "PATCH",
+      await fetch(`${API}/thoughts/${affectedId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priority: priority ?? null }),
       })
@@ -93,10 +94,10 @@ export default function ThoughtsTab({ thoughts, ideas, liveProjects }: Props) {
     if (allBlank) { setError("Fill in at least one field."); return }
     setError("")
     setSubmitting(true)
-    const res = await fetch("/api/thoughts", {
+    const res = await fetch(`${API}/thoughts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title, category, text }),
+      body: JSON.stringify({ title: title || undefined, category: category || undefined, text: text || undefined }),
     })
     setSubmitting(false)
     if (res.ok) { show("saved", "Thought saved"); setTitle(""); setCategory(""); setText(""); setShowForm(false); router.refresh() }

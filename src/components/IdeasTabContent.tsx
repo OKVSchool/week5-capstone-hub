@@ -22,6 +22,7 @@ const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-
 export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props) {
   const router = useRouter()
   const { show } = useToast()
+  const API = process.env.NEXT_PUBLIC_API_URL
   // Local copy so priority changes don't trigger router.refresh(), which would
   // reset the open/close state of every IdeaCard.
   const [localIdeas, setLocalIdeas] = useState(ideas)
@@ -82,8 +83,8 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
     )
 
     for (const [affectedId, priority] of changes) {
-      await fetch(`/api/ideas/${affectedId}`, {
-        method: "PATCH",
+      await fetch(`${API}/ideas/${affectedId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priority: priority ?? null }),
       })
@@ -95,7 +96,7 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
     if (!formReady) { setError("Title, framework, and lane are all required."); return }
     setError("")
     setSubmitting(true)
-    const res = await fetch("/api/ideas", {
+    const res = await fetch(`${API}/ideas`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title, framework, lanes, text }),

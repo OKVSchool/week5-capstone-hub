@@ -2,21 +2,23 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Project } from "@/data/projects"
-import type { RemovedProject } from "@/data/removedProject"
 import type { Thought } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
+import type { Task } from "@/data/tasks"
 import ProjectPanel from "./ProjectPanel"
 import { getHighestAvailable, computeBumpChain, sortByPriority } from "@/lib/priority"
 
 type Props = {
   liveProjects: Project[]
-  removedProjects: RemovedProject[]
+  removedProjects: Project[]
   thoughts: Thought[]
   ideas: Idea[]
+  tasks: Task[]
 }
 
-export default function ProjectsTab({ liveProjects, removedProjects, thoughts, ideas }: Props) {
+export default function ProjectsTab({ liveProjects, removedProjects, thoughts, ideas, tasks }: Props) {
   const router = useRouter()
+  const API = process.env.NEXT_PUBLIC_API_URL
   // Local copy so priority changes don't trigger router.refresh(), which would
   // reset the open/close state of every ProjectPanel.
   const [localProjects, setLocalProjects] = useState(liveProjects)
@@ -51,8 +53,8 @@ export default function ProjectsTab({ liveProjects, removedProjects, thoughts, i
   const autoAssignLevel = takenLevels.size < 5 ? getHighestAvailable(localProjects) : undefined
 
   const q = search.toLowerCase()
-  const orphaned = removedProjects.filter((p) => p.state === "orphaned" && (!q || p.title.toLowerCase().includes(q)))
-  const archived = removedProjects.filter((p) => p.state === "archived" && (!q || p.title.toLowerCase().includes(q)))
+  const orphaned = removedProjects.filter((p) => p.status === "orphaned" && (!q || p.title.toLowerCase().includes(q)))
+  const archived = removedProjects.filter((p) => p.status === "archived" && (!q || p.title.toLowerCase().includes(q)))
 
   const filteredLive = q
     ? localProjects.filter((p) =>
@@ -77,8 +79,8 @@ export default function ProjectsTab({ liveProjects, removedProjects, thoughts, i
     )
 
     for (const [affectedId, priority] of changes) {
-      await fetch(`/api/projects/${affectedId}`, {
-        method: "PATCH",
+      await fetch(`${API}/projects/${affectedId}`, {
+        method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ priority: priority ?? null }),
       })
@@ -108,6 +110,7 @@ export default function ProjectsTab({ liveProjects, removedProjects, thoughts, i
           thoughts={thoughts.filter((t) => t.projectId === p.id)}
           ideas={ideas}
           liveProjects={localProjects}
+          tasks={tasks}
           autoAssignLevel={autoAssignLevel}
           onPriorityChange={handlePriorityChange}
           isOpen={liveOpenId === p.id || livePinnedIds.has(p.id)}
@@ -127,6 +130,7 @@ export default function ProjectsTab({ liveProjects, removedProjects, thoughts, i
           thoughts={thoughts.filter((t) => t.projectId === p.id)}
           ideas={ideas}
           liveProjects={localProjects}
+          tasks={tasks}
           isOpen={orphanOpenId === p.id || orphanPinnedIds.has(p.id)}
           isPinned={orphanPinnedIds.has(p.id)}
           onToggle={() => orphanToggle(p.id)}
@@ -159,6 +163,7 @@ export default function ProjectsTab({ liveProjects, removedProjects, thoughts, i
                   thoughts={thoughts.filter((t) => t.projectId === p.id)}
                   ideas={ideas}
                   liveProjects={localProjects}
+                  tasks={tasks}
                   isOpen={archiveOpenId === p.id || archivePinnedIds.has(p.id)}
                   isPinned={archivePinnedIds.has(p.id)}
                   onToggle={() => archiveToggle(p.id)}

@@ -3,7 +3,7 @@ import { useState } from "react"
 import type { Thought } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
 import type { Project } from "@/data/projects"
-import type { RemovedProject } from "@/data/removedProject"
+import type { Task } from "@/data/tasks"
 import ThoughtsTab from "./ThoughtsTab"
 import IdeasTabContent from "./IdeasTabContent"
 import ProjectsTab from "./ProjectsTab"
@@ -14,10 +14,11 @@ type Props = {
   thoughts: Thought[]
   ideas: Idea[]
   liveProjects: Project[]
-  removedProjects: RemovedProject[]
+  removedProjects: Project[]
+  tasks: Task[]
 }
 
-export default function IdeasTabs({ thoughts, ideas, liveProjects, removedProjects }: Props) {
+export default function IdeasTabs({ thoughts, ideas, liveProjects, removedProjects, tasks }: Props) {
   const [active, setActive] = useState<Tab>("thoughts")
 
   const standaloneThoughts = thoughts.filter((t) => !t.ideaId && !t.projectId)
@@ -77,6 +78,7 @@ export default function IdeasTabs({ thoughts, ideas, liveProjects, removedProjec
             removedProjects={removedProjects}
             thoughts={thoughts}
             ideas={ideas}
+            tasks={tasks}
           />
         )}
       </div>

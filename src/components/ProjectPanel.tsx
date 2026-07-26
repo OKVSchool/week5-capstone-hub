@@ -2,12 +2,12 @@
 import { useState, useEffect } from "react"
 import { useRouter } from "next/navigation"
 import type { Project } from "@/data/projects"
-import type { RemovedProject } from "@/data/removedProject"
 import type { Thought, Category } from "@/data/thoughts"
 import { CATEGORIES } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
 import { LANES } from "@/data/idea"
 import type { Lane } from "@/data/idea"
+import type { Task } from "@/data/tasks"
 import ThoughtCard from "./ThoughtCard"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
@@ -16,11 +16,12 @@ import Crown from "./Crown"
 type Mode = "live" | "orphaned" | "archived"
 
 type Props = {
-  project: Project | RemovedProject
+  project: Project
   mode: Mode
   thoughts: Thought[]
   ideas: Idea[]
   liveProjects: Project[]
+  tasks: Task[]
   autoAssignLevel?: number
   onPriorityChange?: (id: string, level: number | undefined) => void
   // Accordion props — managed by ProjectsTab
@@ -38,11 +39,12 @@ const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
 export default function ProjectPanel({
-  project, mode, thoughts, ideas, liveProjects, autoAssignLevel, onPriorityChange,
+  project, mode, thoughts, ideas, liveProjects, tasks, autoAssignLevel, onPriorityChange,
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
   const router = useRouter()
   const { show } = useToast()
+  const API = process.env.NEXT_PUBLIC_API_URL
   const [showForm, setShowForm] = useState(false)
   const [showMoveForm, setShowMoveForm] = useState(false)
   const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
@@ -55,7 +57,7 @@ export default function ProjectPanel({
   const [mTitle, setMTitle] = useState(project.title)
   const [mFramework, setMFramework] = useState("")
   const [mLanes, setMLanes] = useState<Lane[]>([])
-  const [mText, setMText] = useState(("description" in project ? project.description : "") ?? "")
+  const [mText, setMText] = useState(project.description ?? "")
   const [mError, setMError] = useState("")
 
   // Accordion state for nested ThoughtCards
@@ -65,9 +67,9 @@ export default function ProjectPanel({
   const thoughtBlank = !tTitle.trim() && !tCategory && !tText.trim()
   const moveReady = mTitle.trim() && mFramework.trim() && mLanes.length > 0
   const count = thoughts.length
-  const livePriority = mode === "live" ? (project as Project).priority : undefined
-  const liveProject = mode === "live" ? (project as Project) : undefined
-  const crownType = liveProject?.ideaWasFromThought ? "ornate" : liveProject?.promotedFromIdea ? "basic" : undefined
+  const livePriority = mode === "live" ? project.priority : undefined
+  const liveProject = mode === "live" ? project : undefined
+  const crownType = liveProject?.ideaWasFromThought ? "ornate" : liveProject?.promotedFromIdeaId ? "basic" : undefined
 
   // Reset form + inner accordion when this panel closes
   useEffect(() => {
@@ -98,17 +100,17 @@ export default function ProjectPanel({
   async function handleAddThought(e: React.FormEvent) {
     e.preventDefault()
     if (thoughtBlank) { setTError("At least one field is required."); return }
-    const res = await fetch("/api/thoughts", {
+    const res = await fetch(`${API}/thoughts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ projectId: project.id, title: tTitle, category: tCategory, text: tText }),
+      body: JSON.stringify({ projectId: project.id, title: tTitle || undefined, category: tCategory || undefined, text: tText || undefined }),
     })
     if (res.ok) { show("saved", "Thought saved"); setTTitle(""); setTCategory(""); setTText(""); setTError(""); setShowForm(false); router.refresh() }
     else { const d = await res.json(); setTError(d.error ?? "Failed.") }
   }
 
   async function handleDeleteAll() {
-    await fetch(`/api/removed-projects/${project.id}`, { method: "DELETE" })
+    await fetch(`${API}/projects/${project.id}`, { method: "DELETE" })
     show("executed", "Project deleted")
     router.refresh()
   }
@@ -116,7 +118,7 @@ export default function ProjectPanel({
   async function handleMoveToIdeas(e: React.FormEvent) {
     e.preventDefault()
     if (!moveReady) { setMError("Title, framework, and at least one lane are required."); return }
-    const res = await fetch(`/api/removed-projects/${project.id}?action=move-to-idea`, {
+    const res = await fetch(`${API}/projects/${project.id}/demote`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ title: mTitle, framework: mFramework, lanes: mLanes, text: mText }),
@@ -261,6 +263,7 @@ export default function ProjectPanel({
                   thought={t}
                   ideas={ideas}
                   liveProjects={liveProjects}
+                  task={tasks.find((tk) => tk.thoughtId === t.id)}
                   isOpen={innerOpenId === t.id || innerPinnedIds.has(t.id)}
                   isPinned={innerPinnedIds.has(t.id)}
                   onToggle={() => handleInnerToggle(t.id)}
