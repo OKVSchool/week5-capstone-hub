@@ -5,7 +5,7 @@ import type { Thought, Category } from "@/data/thoughts"
 import { CATEGORIES } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
 import type { Project } from "@/data/projects"
-import ThoughtCard from "./ThoughtCard"
+import ThoughtPanel from "./ThoughtPanel"
 import { getHighestAvailable, computeBumpChain, sortByPriority } from "@/lib/priority"
 import { useToast } from "@/lib/toast"
 
@@ -145,7 +145,7 @@ export default function ThoughtsTab({ thoughts, ideas, liveProjects }: Props) {
         <p className="text-sm text-zinc-400">No thoughts match "{search}".</p>
       )}
       {filtered.map((t) => (
-        <ThoughtCard
+        <ThoughtPanel
           key={t.id}
           thought={t}
           ideas={ideas}

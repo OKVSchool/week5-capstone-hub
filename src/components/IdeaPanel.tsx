@@ -7,7 +7,7 @@ import { PROJECT_LANES } from "@/data/projects"
 import type { Thought, Category } from "@/data/thoughts"
 import { CATEGORIES } from "@/data/thoughts"
 import type { Project } from "@/data/projects"
-import ThoughtCard from "./ThoughtCard"
+import NestedThought from "./NestedThought"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
 import Crown from "./Crown"
@@ -35,7 +35,7 @@ const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-60
 const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 disabled:opacity-40 disabled:cursor-not-allowed"
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
-export default function IdeaCard({
+export default function IdeaPanel({
   idea, thoughts, ideas, liveProjects, autoAssignLevel, onPriorityChange,
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
@@ -215,7 +215,7 @@ export default function IdeaCard({
               {thoughts.length > 0 && (
                 <div className="space-y-2 pt-2 border-t border-zinc-100 dark:border-zinc-700">
                   {[...thoughts].reverse().map((t) => (
-                    <ThoughtCard
+                    <NestedThought
                       key={t.id}
                       thought={t}
                       ideas={ideas}

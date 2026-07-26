@@ -5,7 +5,7 @@ import type { Idea, Lane } from "@/data/idea"
 import { LANES } from "@/data/idea"
 import type { Thought } from "@/data/thoughts"
 import type { Project } from "@/data/projects"
-import IdeaCard from "./IdeaCard"
+import IdeaPanel from "./IdeaPanel"
 import { getHighestAvailable, computeBumpChain, sortByPriority } from "@/lib/priority"
 import { useToast } from "@/lib/toast"
 
@@ -154,7 +154,7 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
         <p className="text-sm text-zinc-400">No ideas match "{search}".</p>
       )}
       {filtered.map((idea) => (
-        <IdeaCard
+        <IdeaPanel
           key={idea.id}
           idea={idea}
           thoughts={thoughts.filter((t) => t.ideaId === idea.id)}

@@ -144,7 +144,7 @@ export default function TaskList({ tasks: initial, projectId }: { tasks: Task[];
       {pending.length > 0 && (
         <ul className="space-y-1">
           {pending.map(task => (
-            <TaskRow key={task.id} task={task} onToggle={handleToggle} onUpdate={handleUpdate} onDelete={handleDelete} />
+            <TaskItem key={task.id} task={task} onToggle={handleToggle} onUpdate={handleUpdate} onDelete={handleDelete} />
           ))}
         </ul>
       )}
@@ -152,7 +152,7 @@ export default function TaskList({ tasks: initial, projectId }: { tasks: Task[];
       {done.length > 0 && (
         <ul className={`space-y-1 opacity-50 ${pending.length > 0 ? "mt-3" : ""}`}>
           {done.map(task => (
-            <TaskRow key={task.id} task={task} onToggle={handleToggle} onUpdate={handleUpdate} onDelete={handleDelete} />
+            <TaskItem key={task.id} task={task} onToggle={handleToggle} onUpdate={handleUpdate} onDelete={handleDelete} />
           ))}
         </ul>
       )}
@@ -160,7 +160,7 @@ export default function TaskList({ tasks: initial, projectId }: { tasks: Task[];
   )
 }
 
-function TaskRow({ task, onToggle, onUpdate, onDelete }: {
+function TaskItem({ task, onToggle, onUpdate, onDelete }: {
   task: Task
   onToggle: (t: Task) => void
   onUpdate: (updated: Task) => void

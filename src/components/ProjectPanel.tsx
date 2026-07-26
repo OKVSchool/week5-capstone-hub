@@ -8,7 +8,7 @@ import type { Idea } from "@/data/idea"
 import { LANES } from "@/data/idea"
 import type { Lane } from "@/data/idea"
 import type { Task } from "@/data/tasks"
-import ThoughtCard from "./ThoughtCard"
+import NestedThought from "./NestedThought"
 import TaskList from "./TaskList"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
@@ -259,7 +259,7 @@ export default function ProjectPanel({
           {thoughts.length > 0 && (
             <div className="space-y-2 pt-1">
               {[...thoughts].reverse().map((t) => (
-                <ThoughtCard
+                <NestedThought
                   key={t.id}
                   thought={t}
                   ideas={ideas}

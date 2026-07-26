@@ -4,18 +4,13 @@ import { useRouter } from "next/navigation"
 import type { Thought, Category } from "@/data/thoughts"
 import { getThoughtLabel, CATEGORIES } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
-import { LANES } from "@/data/idea"
 import type { Project } from "@/data/projects"
-import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
 
 type Props = {
   thought: Thought
   ideas: Idea[]
   liveProjects: Project[]
-  showPromoteToIdea?: boolean
-  autoAssignLevel?: number
-  onPriorityChange?: (id: string, level: number | undefined) => void
   isOpen: boolean
   isPinned: boolean
   onToggle: () => void
@@ -23,7 +18,7 @@ type Props = {
   onUnpin: () => void
 }
 
-type Mode = "view" | "edit" | "move" | "promote" | "confirmDelete" | "promoteToTask"
+type Mode = "view" | "edit" | "move" | "confirmDelete" | "promoteToTask"
 
 const INPUT = "w-full rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
 const BTN_PRIMARY = "rounded bg-zinc-900 px-3 py-1 text-xs text-white hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
@@ -31,9 +26,8 @@ const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-60
 const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 disabled:opacity-40 disabled:cursor-not-allowed"
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
-export default function ThoughtCard({
+export default function NestedThought({
   thought, ideas, liveProjects,
-  showPromoteToIdea = false, autoAssignLevel, onPriorityChange,
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
   const router = useRouter()
@@ -46,12 +40,6 @@ export default function ThoughtCard({
   const [text, setText] = useState(thought.text ?? "")
   const [error, setError] = useState("")
 
-  const [pTitle, setPTitle] = useState(thought.title ?? "")
-  const [pFramework, setPFramework] = useState("")
-  const [pLanes, setPLanes] = useState<string[]>([])
-  const [pText, setPText] = useState(thought.text ?? "")
-  const [pError, setPError] = useState("")
-
   const [moveSection, setMoveSection] = useState<"" | "standalone" | "ideas" | "projects">("")
 
   const [tskTitle, setTskTitle] = useState("")
@@ -61,15 +49,8 @@ export default function ThoughtCard({
   const [tskSubmitting, setTskSubmitting] = useState(false)
 
   const editBlank = !title.trim() && !category && !text.trim()
-  const promoteReady = pTitle.trim() && pFramework.trim() && pLanes.length > 0
 
-  function reset() {
-    setMode("view")
-    setError("")
-    setPError("")
-    setMoveSection("")
-    setTskError("")
-  }
+  function reset() { setMode("view"); setError(""); setMoveSection(""); setTskError("") }
 
   useEffect(() => { if (!isOpen) reset() }, [isOpen])
 
@@ -102,19 +83,6 @@ export default function ThoughtCard({
     if (res.ok) { show("saved", "Thought moved"); reset(); router.refresh() }
   }
 
-  async function handlePromote() {
-    if (!promoteReady) { setPError("Title, framework, and lane are all required."); return }
-    const res = await fetch(`${API}/ideas`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: pTitle, framework: pFramework, lanes: pLanes, text: pText, promotedFromThought: true }),
-    })
-    if (!res.ok) { const d = await res.json(); setPError(d.error ?? "Failed."); return }
-    await fetch(`${API}/thoughts/${thought.id}`, { method: "DELETE" })
-    show("promoted", "Promoted to Idea")
-    router.refresh()
-  }
-
   async function handlePromoteToTask(e: React.FormEvent) {
     e.preventDefault()
     if (!tskTitle.trim()) { setTskError("Title is required."); return }
@@ -141,18 +109,14 @@ export default function ThoughtCard({
     router.refresh()
   }
 
-  const starDisplay = thought.priority !== undefined
-    ? <span className="text-yellow-400 text-xs ml-1">{"★".repeat(thought.priority)}</span>
-    : null
-
   return (
     <div className="rounded border border-zinc-200 dark:border-zinc-700">
       <div
         onClick={onToggle}
         className="flex w-full items-center px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer select-none"
       >
-        <span className="flex-1 text-left text-sm text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
-          {getThoughtLabel(thought)}{starDisplay}
+        <span className="flex-1 text-left text-sm text-zinc-800 dark:text-zinc-200">
+          {getThoughtLabel(thought)}
         </span>
         <div className="flex items-center gap-2 mx-2" onClick={e => e.stopPropagation()}>
           {isOpen && !isPinned && (
@@ -190,27 +154,8 @@ export default function ThoughtCard({
               )}
               <p className="text-xs text-zinc-400">{new Date(thought.createdAt).toLocaleDateString()}</p>
 
-              {onPriorityChange && (thought.priority !== undefined || autoAssignLevel !== undefined) && (
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-zinc-400 uppercase tracking-wide">Priority</span>
-                  {thought.priority !== undefined ? (
-                    <StarRating value={thought.priority} onChange={(p) => onPriorityChange(thought.id, p)} />
-                  ) : (
-                    <button
-                      onClick={() => onPriorityChange(thought.id, autoAssignLevel!)}
-                      className="rounded border border-zinc-200 px-2 py-0.5 text-xs text-zinc-500 hover:border-yellow-300 hover:text-yellow-600 dark:border-zinc-700 dark:hover:border-yellow-600 dark:hover:text-yellow-400"
-                    >
-                      + Add Priority
-                    </button>
-                  )}
-                </div>
-              )}
-
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setMode("move")} className={BTN_GHOST}>Move Thought</button>
-                {showPromoteToIdea && (
-                  <button onClick={() => setMode("promote")} className={BTN_GREEN}>Promote to Idea</button>
-                )}
                 {thought.projectId && (
                   <button onClick={() => {
                     setTskTitle(thought.title ?? "")
@@ -326,32 +271,6 @@ export default function ThoughtCard({
               )}
               <button onClick={reset} className={BTN_GHOST}>Cancel</button>
             </div>
-          )}
-
-          {mode === "promote" && (
-            <>
-              <p className="text-xs text-zinc-500">A thought becomes an Idea when it has a title, framework, and at least one lane.</p>
-              <div className="space-y-2">
-                <input type="text" value={pTitle} onChange={(e) => setPTitle(e.target.value)} placeholder="Title (required)" className={INPUT} />
-                <input type="text" value={pFramework} onChange={(e) => setPFramework(e.target.value)} placeholder="Framework (required)" className={INPUT} />
-                <div className="rounded border border-zinc-300 dark:border-zinc-600 px-3 py-2 space-y-1">
-                  <p className="text-xs text-zinc-400 mb-1">Lane (pick any that apply)</p>
-                  {LANES.map(l => (
-                    <label key={l} className="flex items-center gap-2 text-sm text-zinc-700 dark:text-zinc-300 cursor-pointer capitalize">
-                      <input type="checkbox" checked={pLanes.includes(l)}
-                        onChange={e => setPLanes(prev => e.target.checked ? [...prev, l] : prev.filter(x => x !== l))} />
-                      {l}
-                    </label>
-                  ))}
-                </div>
-                <textarea value={pText} onChange={(e) => setPText(e.target.value)} placeholder="Notes (optional)" rows={3} className={INPUT} />
-              </div>
-              {pError && <p className="text-xs text-red-500">{pError}</p>}
-              <div className="flex gap-2">
-                <button onClick={handlePromote} disabled={!promoteReady} className={BTN_GREEN}>Promote to Idea</button>
-                <button onClick={reset} className={BTN_GHOST}>Cancel</button>
-              </div>
-            </>
           )}
 
         </div>
