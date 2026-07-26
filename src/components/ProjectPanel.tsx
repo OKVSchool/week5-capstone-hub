@@ -9,6 +9,7 @@ import { LANES } from "@/data/idea"
 import type { Lane } from "@/data/idea"
 import type { Task } from "@/data/tasks"
 import ThoughtCard from "./ThoughtCard"
+import TaskList from "./TaskList"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
 import Crown from "./Crown"
@@ -263,7 +264,6 @@ export default function ProjectPanel({
                   thought={t}
                   ideas={ideas}
                   liveProjects={liveProjects}
-                  task={tasks.find((tk) => tk.thoughtId === t.id)}
                   isOpen={innerOpenId === t.id || innerPinnedIds.has(t.id)}
                   isPinned={innerPinnedIds.has(t.id)}
                   onToggle={() => handleInnerToggle(t.id)}
@@ -272,6 +272,13 @@ export default function ProjectPanel({
                 />
               ))}
             </div>
+          )}
+
+          {mode === "live" && (
+            <TaskList
+              tasks={tasks.filter(t => t.projectId === project.id)}
+              projectId={project.id}
+            />
           )}
 
         </div>

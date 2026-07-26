@@ -6,7 +6,6 @@ import { getThoughtLabel, CATEGORIES } from "@/data/thoughts"
 import type { Idea } from "@/data/idea"
 import { LANES } from "@/data/idea"
 import type { Project } from "@/data/projects"
-import type { Task } from "@/data/tasks"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
 
@@ -14,7 +13,6 @@ type Props = {
   thought: Thought
   ideas: Idea[]
   liveProjects: Project[]
-  task?: Task
   showPromoteToIdea?: boolean
   autoAssignLevel?: number
   onPriorityChange?: (id: string, level: number | undefined) => void
@@ -25,16 +23,16 @@ type Props = {
   onUnpin: () => void
 }
 
-type Mode = "view" | "edit" | "move" | "promote" | "confirmDelete" | "createTask" | "editTask" | "confirmDeleteTask"
+type Mode = "view" | "edit" | "move" | "promote" | "confirmDelete" | "promoteToTask"
 
 const INPUT = "w-full rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
 const BTN_PRIMARY = "rounded bg-zinc-900 px-3 py-1 text-xs text-white hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
 const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
-const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950"
+const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-700 hover:bg-green-50 dark:border-green-500 dark:text-green-400 dark:hover:bg-green-950 disabled:opacity-40 disabled:cursor-not-allowed"
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
 export default function ThoughtCard({
-  thought, ideas, liveProjects, task,
+  thought, ideas, liveProjects,
   showPromoteToIdea = false, autoAssignLevel, onPriorityChange,
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
@@ -43,37 +41,24 @@ export default function ThoughtCard({
   const API = process.env.NEXT_PUBLIC_API_URL
   const [mode, setMode] = useState<Mode>("view")
 
-  // Thought edit state
   const [title, setTitle] = useState(thought.title ?? "")
   const [category, setCategory] = useState<Category | "">(thought.category ?? "")
   const [text, setText] = useState(thought.text ?? "")
   const [error, setError] = useState("")
 
-  // Promote state
   const [pTitle, setPTitle] = useState(thought.title ?? "")
   const [pFramework, setPFramework] = useState("")
   const [pLanes, setPLanes] = useState<string[]>([])
   const [pText, setPText] = useState(thought.text ?? "")
   const [pError, setPError] = useState("")
 
-  // Move state
   const [moveSection, setMoveSection] = useState<"" | "standalone" | "ideas" | "projects">("")
 
-  // Task local state — synced from prop so closing/reopening the card reflects server truth
-  const [localTask, setLocalTask] = useState<Task | undefined>(task)
-  useEffect(() => { setLocalTask(task) }, [task])
-
-  // Create task form state
   const [tskTitle, setTskTitle] = useState("")
   const [tskNotes, setTskNotes] = useState("")
   const [tskDueBy, setTskDueBy] = useState("")
   const [tskError, setTskError] = useState("")
   const [tskSubmitting, setTskSubmitting] = useState(false)
-
-  // Edit task form state
-  const [editTskTitle, setEditTskTitle] = useState("")
-  const [editTskNotes, setEditTskNotes] = useState("")
-  const [editTskDueBy, setEditTskDueBy] = useState("")
 
   const editBlank = !title.trim() && !category && !text.trim()
   const promoteReady = pTitle.trim() && pFramework.trim() && pLanes.length > 0
@@ -114,7 +99,7 @@ export default function ThoughtCard({
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(body),
     })
-    if (res.ok) { show("saved", "Thought saved"); reset(); router.refresh() }
+    if (res.ok) { show("saved", "Thought moved"); reset(); router.refresh() }
   }
 
   async function handlePromote() {
@@ -130,12 +115,12 @@ export default function ThoughtCard({
     router.refresh()
   }
 
-  async function handleCreateTask(e: React.FormEvent) {
+  async function handlePromoteToTask(e: React.FormEvent) {
     e.preventDefault()
     if (!tskTitle.trim()) { setTskError("Title is required."); return }
     setTskError("")
     setTskSubmitting(true)
-    const res = await fetch(`${API}/tasks`, {
+    const taskRes = await fetch(`${API}/tasks`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
@@ -143,65 +128,16 @@ export default function ThoughtCard({
         notes: tskNotes.trim() || undefined,
         dueBy: tskDueBy || undefined,
         projectId: thought.projectId,
-        thoughtId: thought.id,
       }),
     })
     setTskSubmitting(false)
-    if (res.ok) {
-      const newTask: Task = await res.json()
-      setLocalTask(newTask)
-      setTskTitle("")
-      setTskNotes("")
-      setTskDueBy("")
-      setMode("view")
-      show("saved", "Task created")
-      router.refresh()
-    } else {
-      const d = await res.json()
+    if (!taskRes.ok) {
+      const d = await taskRes.json()
       setTskError(d.error ?? "Failed.")
+      return
     }
-  }
-
-  async function handleToggleComplete() {
-    if (!localTask) return
-    const next = { ...localTask, done: !localTask.done }
-    setLocalTask(next)
-    await fetch(`${API}/tasks/${localTask.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ done: next.done }),
-    })
-  }
-
-  async function handleSaveTask(e: React.FormEvent) {
-    e.preventDefault()
-    if (!editTskTitle.trim()) { setTskError("Title is required."); return }
-    const res = await fetch(`${API}/tasks/${localTask!.id}`, {
-      method: "PUT",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        title: editTskTitle.trim(),
-        notes: editTskNotes.trim() || null,
-        dueBy: editTskDueBy || null,
-      }),
-    })
-    if (res.ok) {
-      const updated: Task = await res.json()
-      setLocalTask(updated)
-      setMode("view")
-      setTskError("")
-      show("saved", "Task saved")
-    } else {
-      const d = await res.json()
-      setTskError(d.error ?? "Failed.")
-    }
-  }
-
-  async function handleDeleteTask() {
-    await fetch(`${API}/tasks/${localTask!.id}`, { method: "DELETE" })
-    setLocalTask(undefined)
-    setMode("view")
-    show("executed", "Task removed")
+    await fetch(`${API}/thoughts/${thought.id}`, { method: "DELETE" })
+    show("promoted", "Promoted to task")
     router.refresh()
   }
 
@@ -211,22 +147,12 @@ export default function ThoughtCard({
 
   return (
     <div className="rounded border border-zinc-200 dark:border-zinc-700">
-      {/* Header */}
       <div
         onClick={onToggle}
         className="flex w-full items-center px-4 py-3 hover:bg-zinc-50 dark:hover:bg-zinc-800/50 cursor-pointer select-none"
       >
-        <span className="flex-1 text-left text-sm text-zinc-800 dark:text-zinc-200 flex items-center gap-1.5">
+        <span className="flex-1 text-left text-sm text-zinc-800 dark:text-zinc-200 flex items-center gap-1">
           {getThoughtLabel(thought)}{starDisplay}
-          {localTask && (
-            <span className={`text-xs px-1.5 py-0.5 rounded font-normal ${
-              localTask.done
-                ? "bg-green-50 text-green-600 dark:bg-green-900/30 dark:text-green-400"
-                : "bg-blue-50 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400"
-            }`}>
-              {localTask.done ? "✓ done" : "task"}
-            </span>
-          )}
         </span>
         <div className="flex items-center gap-2 mx-2" onClick={e => e.stopPropagation()}>
           {isOpen && !isPinned && (
@@ -248,95 +174,7 @@ export default function ThoughtCard({
       {isOpen && (
         <div className="border-t border-zinc-100 dark:border-zinc-700 px-4 py-3 space-y-3">
 
-          {/* ── Task view (when a task is attached) ── */}
-          {localTask && mode === "view" && (
-            <>
-              <div>
-                <p className="text-xs text-zinc-400 uppercase tracking-wide mb-1">Task</p>
-                <p className={`text-sm font-medium ${localTask.done ? "line-through text-zinc-400 dark:text-zinc-500" : "text-zinc-800 dark:text-zinc-200"}`}>
-                  {localTask.title}
-                </p>
-              </div>
-              {localTask.notes && (
-                <div>
-                  <p className="text-xs text-zinc-400 uppercase tracking-wide">Notes</p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400 whitespace-pre-wrap">{localTask.notes}</p>
-                </div>
-              )}
-              {localTask.dueBy && (
-                <div>
-                  <p className="text-xs text-zinc-400 uppercase tracking-wide">Due By</p>
-                  <p className="text-sm text-zinc-600 dark:text-zinc-400">
-                    {new Date(localTask.dueBy + "T00:00:00").toLocaleDateString()}
-                  </p>
-                </div>
-              )}
-              <div className="flex flex-wrap gap-2">
-                <button onClick={handleToggleComplete} className={localTask.done ? BTN_GHOST : BTN_GREEN}>
-                  {localTask.done ? "Undo Complete" : "Complete"}
-                </button>
-                <button onClick={() => {
-                  setEditTskTitle(localTask.title)
-                  setEditTskNotes(localTask.notes ?? "")
-                  setEditTskDueBy(localTask.dueBy ?? "")
-                  setTskError("")
-                  setMode("editTask")
-                }} className={BTN_GHOST}>
-                  Edit
-                </button>
-                <button onClick={() => setMode("confirmDeleteTask")} className={BTN_RED}>
-                  Delete Task
-                </button>
-              </div>
-            </>
-          )}
-
-          {localTask && mode === "editTask" && (
-            <form onSubmit={handleSaveTask} className="space-y-2">
-              <input
-                autoFocus
-                type="text"
-                value={editTskTitle}
-                onChange={e => setEditTskTitle(e.target.value)}
-                placeholder="Title (required)"
-                className={INPUT}
-              />
-              <textarea
-                value={editTskNotes}
-                onChange={e => setEditTskNotes(e.target.value)}
-                placeholder="Notes (optional)"
-                rows={3}
-                className={INPUT}
-              />
-              <div>
-                <p className="text-xs text-zinc-400 mb-1">Due By (optional)</p>
-                <input
-                  type="date"
-                  value={editTskDueBy}
-                  onChange={e => setEditTskDueBy(e.target.value)}
-                  className={INPUT}
-                />
-              </div>
-              {tskError && <p className="text-xs text-red-500">{tskError}</p>}
-              <div className="flex gap-2">
-                <button type="submit" disabled={!editTskTitle.trim()} className={BTN_PRIMARY}>Save</button>
-                <button type="button" onClick={() => { setMode("view"); setTskError("") }} className={BTN_GHOST}>Cancel</button>
-              </div>
-            </form>
-          )}
-
-          {localTask && mode === "confirmDeleteTask" && (
-            <div className="space-y-2">
-              <p className="text-sm text-zinc-700 dark:text-zinc-300">Remove this task from the thought?</p>
-              <div className="flex gap-2">
-                <button onClick={handleDeleteTask} className={BTN_RED}>Yes, remove</button>
-                <button onClick={() => setMode("view")} className={BTN_GHOST}>Cancel</button>
-              </div>
-            </div>
-          )}
-
-          {/* ── Regular thought view (no task attached) ── */}
-          {!localTask && mode === "view" && (
+          {mode === "view" && (
             <>
               {thought.category && (
                 <div><p className="text-xs text-zinc-400 uppercase tracking-wide">Category</p>
@@ -373,20 +211,26 @@ export default function ThoughtCard({
                 {showPromoteToIdea && (
                   <button onClick={() => setMode("promote")} className={BTN_GREEN}>Promote to Idea</button>
                 )}
-                <button onClick={() => { setMode("edit"); setTitle(thought.title ?? ""); setCategory(thought.category ?? ""); setText(thought.text ?? "") }} className={BTN_GHOST}>Edit</button>
-                <button onClick={() => setMode("confirmDelete")} className={BTN_RED}>Delete</button>
                 {thought.projectId && (
-                  <button onClick={() => { setTskTitle(""); setTskNotes(""); setTskDueBy(""); setTskError(""); setMode("createTask") }} className={BTN_GHOST}>
-                    Create Task
+                  <button onClick={() => {
+                    setTskTitle(thought.title ?? "")
+                    setTskNotes(thought.text ?? "")
+                    setTskDueBy("")
+                    setTskError("")
+                    setMode("promoteToTask")
+                  }} className={BTN_GHOST}>
+                    Promote to Task
                   </button>
                 )}
+                <button onClick={() => { setMode("edit"); setTitle(thought.title ?? ""); setCategory(thought.category ?? ""); setText(thought.text ?? "") }} className={BTN_GHOST}>Edit</button>
+                <button onClick={() => setMode("confirmDelete")} className={BTN_RED}>Delete</button>
               </div>
             </>
           )}
 
-          {!localTask && mode === "createTask" && (
-            <form onSubmit={handleCreateTask} className="space-y-2">
-              <p className="text-xs text-zinc-500">Add a task to this thought.</p>
+          {mode === "promoteToTask" && (
+            <form onSubmit={handlePromoteToTask} className="space-y-2">
+              <p className="text-xs text-zinc-500">This thought will be removed and added as a task on the project.</p>
               <input
                 autoFocus
                 type="text"
@@ -402,26 +246,23 @@ export default function ThoughtCard({
                 rows={3}
                 className={INPUT}
               />
-              <div>
-                <p className="text-xs text-zinc-400 mb-1">Due By (optional)</p>
-                <input
-                  type="date"
-                  value={tskDueBy}
-                  onChange={e => setTskDueBy(e.target.value)}
-                  className={INPUT}
-                />
-              </div>
+              <input
+                type="date"
+                value={tskDueBy}
+                onChange={e => setTskDueBy(e.target.value)}
+                className={INPUT}
+              />
               {tskError && <p className="text-xs text-red-500">{tskError}</p>}
               <div className="flex gap-2">
-                <button type="submit" disabled={!tskTitle.trim() || tskSubmitting} className={BTN_PRIMARY}>
-                  {tskSubmitting ? "Creating…" : "Create Task"}
+                <button type="submit" disabled={!tskTitle.trim() || tskSubmitting} className={BTN_GREEN}>
+                  {tskSubmitting ? "Promoting…" : "Promote to Task"}
                 </button>
                 <button type="button" onClick={() => { setMode("view"); setTskError("") }} className={BTN_GHOST}>Cancel</button>
               </div>
             </form>
           )}
 
-          {!localTask && mode === "confirmDelete" && (
+          {mode === "confirmDelete" && (
             <div className="space-y-2">
               <p className="text-sm text-zinc-700 dark:text-zinc-300">Delete this thought?</p>
               <div className="flex gap-2">
@@ -431,7 +272,7 @@ export default function ThoughtCard({
             </div>
           )}
 
-          {!localTask && mode === "edit" && (
+          {mode === "edit" && (
             <>
               <div className="space-y-2">
                 <input type="text" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="Title (optional)" className={INPUT} />
@@ -449,7 +290,7 @@ export default function ThoughtCard({
             </>
           )}
 
-          {!localTask && mode === "move" && (
+          {mode === "move" && (
             <div className="space-y-2">
               <p className="text-xs text-zinc-500">Move this thought to:</p>
               <button onClick={() => handleMove("standalone")} className="block w-full text-left rounded border border-zinc-200 px-3 py-2 text-sm text-zinc-700 hover:bg-zinc-50 dark:border-zinc-700 dark:text-zinc-300 dark:hover:bg-zinc-800">
@@ -487,7 +328,7 @@ export default function ThoughtCard({
             </div>
           )}
 
-          {!localTask && mode === "promote" && (
+          {mode === "promote" && (
             <>
               <p className="text-xs text-zinc-500">A thought becomes an Idea when it has a title, framework, and at least one lane.</p>
               <div className="space-y-2">
@@ -507,7 +348,7 @@ export default function ThoughtCard({
               </div>
               {pError && <p className="text-xs text-red-500">{pError}</p>}
               <div className="flex gap-2">
-                <button onClick={handlePromote} disabled={!promoteReady} className={BTN_GREEN + " disabled:opacity-40 disabled:cursor-not-allowed"}>Promote to Idea</button>
+                <button onClick={handlePromote} disabled={!promoteReady} className={BTN_GREEN}>Promote to Idea</button>
                 <button onClick={reset} className={BTN_GHOST}>Cancel</button>
               </div>
             </>
