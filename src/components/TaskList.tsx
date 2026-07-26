@@ -1,5 +1,5 @@
 'use client'
-import { useState, useEffect } from "react"
+import { useState, useEffect, useRef } from "react"
 import type { Task } from "@/data/tasks"
 import { useToast } from "@/lib/toast"
 
@@ -23,8 +23,18 @@ export default function TaskList({ tasks: initial, projectId, ideaId, thoughtId 
   const [error, setError] = useState("")
   const [submitting, setSubmitting] = useState(false)
 
-  // Sync when parent re-fetches (e.g. after Promote to Task)
-  useEffect(() => { setTasks(initial) }, [initial])
+  // Sync only when server data actually changes (new task IDs), not on every
+  // re-render — parent passes tasks.filter(...) inline which creates a new
+  // array reference each render, causing this effect to fire and wipe
+  // optimistically-added tasks.
+  const initialKeyRef = useRef(initial.map(t => t.id).join(","))
+  useEffect(() => {
+    const key = initial.map(t => t.id).join(",")
+    if (key !== initialKeyRef.current) {
+      initialKeyRef.current = key
+      setTasks(initial)
+    }
+  }, [initial])
 
   async function handleToggle(task: Task) {
     setTasks(prev => prev.map(t => t.id === task.id ? { ...t, done: !t.done } : t))
