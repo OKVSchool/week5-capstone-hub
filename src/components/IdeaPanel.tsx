@@ -8,15 +8,18 @@ import type { Thought, Category } from "@/data/thoughts"
 import { CATEGORIES } from "@/data/thoughts"
 import type { Project } from "@/data/projects"
 import NestedThought from "./NestedThought"
+import TaskList from "./TaskList"
 import StarRating from "./StarRating"
 import { useToast } from "@/lib/toast"
 import Crown from "./Crown"
+import type { Task } from "@/data/tasks"
 
 type Props = {
   idea: Idea
   thoughts: Thought[]
   ideas: Idea[]
   liveProjects: Project[]
+  tasks: Task[]
   autoAssignLevel?: number
   onPriorityChange?: (id: string, level: number | undefined) => void
   // Accordion props — managed by IdeasTabContent
@@ -36,7 +39,7 @@ const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
 export default function IdeaPanel({
-  idea, thoughts, ideas, liveProjects, autoAssignLevel, onPriorityChange,
+  idea, thoughts, ideas, liveProjects, tasks, autoAssignLevel, onPriorityChange,
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
   const router = useRouter()
@@ -229,6 +232,8 @@ export default function IdeaPanel({
                   ))}
                 </div>
               )}
+
+              <TaskList tasks={tasks} ideaId={idea.id} />
             </>
           )}
 

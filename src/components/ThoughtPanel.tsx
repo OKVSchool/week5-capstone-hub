@@ -7,12 +7,15 @@ import type { Idea } from "@/data/idea"
 import { LANES } from "@/data/idea"
 import type { Project } from "@/data/projects"
 import StarRating from "./StarRating"
+import TaskList from "./TaskList"
 import { useToast } from "@/lib/toast"
+import type { Task } from "@/data/tasks"
 
 type Props = {
   thought: Thought
   ideas: Idea[]
   liveProjects: Project[]
+  tasks: Task[]
   showPromoteToIdea?: boolean
   autoAssignLevel?: number
   onPriorityChange?: (id: string, level: number | undefined) => void
@@ -32,7 +35,7 @@ const BTN_GREEN = "rounded border border-green-600 px-3 py-1 text-xs text-green-
 const BTN_RED = "rounded border border-red-200 px-3 py-1 text-xs text-red-500 hover:bg-red-50 dark:border-red-900 dark:hover:bg-red-950"
 
 export default function ThoughtPanel({
-  thought, ideas, liveProjects,
+  thought, ideas, liveProjects, tasks,
   showPromoteToIdea = false, autoAssignLevel, onPriorityChange,
   isOpen, isPinned, onToggle, onPin, onUnpin,
 }: Props) {
@@ -176,6 +179,8 @@ export default function ThoughtPanel({
                 <button onClick={() => { setMode("edit"); setTitle(thought.title ?? ""); setCategory(thought.category ?? ""); setText(thought.text ?? "") }} className={BTN_GHOST}>Edit</button>
                 <button onClick={() => setMode("confirmDelete")} className={BTN_RED}>Delete</button>
               </div>
+
+              <TaskList tasks={tasks} thoughtId={thought.id} />
             </>
           )}
 

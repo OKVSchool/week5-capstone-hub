@@ -7,7 +7,12 @@ const INPUT = "w-full rounded border border-zinc-300 bg-white px-3 py-1.5 text-s
 const BTN_PRIMARY = "rounded bg-zinc-900 px-3 py-1 text-xs text-white hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
 const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
 
-export default function TaskList({ tasks: initial, projectId }: { tasks: Task[]; projectId: string }) {
+export default function TaskList({ tasks: initial, projectId, ideaId, thoughtId }: {
+  tasks: Task[]
+  projectId?: string
+  ideaId?: string
+  thoughtId?: string
+}) {
   const { show } = useToast()
   const API = process.env.NEXT_PUBLIC_API_URL
   const [tasks, setTasks] = useState(initial)
@@ -53,7 +58,9 @@ export default function TaskList({ tasks: initial, projectId }: { tasks: Task[];
         title: title.trim(),
         notes: notes.trim() || undefined,
         dueBy: dueBy || undefined,
-        projectId,
+        projectId: projectId || undefined,
+        ideaId: ideaId || undefined,
+        thoughtId: thoughtId || undefined,
       }),
     })
     setSubmitting(false)

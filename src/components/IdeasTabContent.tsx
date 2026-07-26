@@ -8,18 +8,20 @@ import type { Project } from "@/data/projects"
 import IdeaPanel from "./IdeaPanel"
 import { getHighestAvailable, computeBumpChain, sortByPriority } from "@/lib/priority"
 import { useToast } from "@/lib/toast"
+import type { Task } from "@/data/tasks"
 
 type Props = {
   ideas: Idea[]
   thoughts: Thought[]
   liveProjects: Project[]
+  tasks: Task[]
 }
 
 const INPUT = "w-full rounded border border-zinc-300 bg-white px-3 py-1.5 text-sm dark:border-zinc-600 dark:bg-zinc-900 dark:text-zinc-100 placeholder:text-zinc-400"
 const BTN_PRIMARY = "rounded bg-zinc-900 px-3 py-1.5 text-xs text-white hover:bg-zinc-700 disabled:opacity-40 disabled:cursor-not-allowed dark:bg-zinc-100 dark:text-zinc-900 dark:hover:bg-zinc-300"
 const BTN_GHOST = "rounded border border-zinc-300 px-3 py-1.5 text-xs text-zinc-600 hover:bg-zinc-50 dark:border-zinc-600 dark:text-zinc-300 dark:hover:bg-zinc-800"
 
-export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props) {
+export default function IdeasTabContent({ ideas, thoughts, liveProjects, tasks }: Props) {
   const router = useRouter()
   const { show } = useToast()
   const API = process.env.NEXT_PUBLIC_API_URL
@@ -160,6 +162,7 @@ export default function IdeasTabContent({ ideas, thoughts, liveProjects }: Props
           thoughts={thoughts.filter((t) => t.ideaId === idea.id)}
           ideas={[...localIdeas].reverse()}
           liveProjects={liveProjects}
+          tasks={tasks.filter((tk) => tk.ideaId === idea.id)}
           autoAssignLevel={autoAssignLevel}
           onPriorityChange={handlePriorityChange}
           isOpen={openId === idea.id || pinnedIds.has(idea.id)}

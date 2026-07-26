@@ -37,7 +37,7 @@ export default async function ProjectPage({ params }: { params: Promise<{ id: st
                     {project.framework}
                   </span>
                 )}
-                {project.lanes?.map(l => (
+                {project.lanes?.map((l: string) => (
                   <span key={l} className="rounded-full bg-zinc-100 px-2 py-0.5 text-xs text-zinc-600 dark:bg-zinc-800 dark:text-zinc-300 capitalize">
                     {l}
                   </span>

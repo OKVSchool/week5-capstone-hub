@@ -7,7 +7,8 @@ export type Task = {
   dueBy?: string;
   category?: Category;
   done: boolean;
-  projectId: string;
+  projectId?: string;
+  ideaId?: string;
   thoughtId?: string;
   createdAt?: string;
 }

@@ -95,7 +95,8 @@ export default function NestedThought({
         title: tskTitle.trim(),
         notes: tskNotes.trim() || undefined,
         dueBy: tskDueBy || undefined,
-        projectId: thought.projectId,
+        projectId: thought.projectId || undefined,
+        ideaId: thought.ideaId || undefined,
       }),
     })
     setTskSubmitting(false)
@@ -156,14 +157,14 @@ export default function NestedThought({
 
               <div className="flex flex-wrap gap-2">
                 <button onClick={() => setMode("move")} className={BTN_GHOST}>Move Thought</button>
-                {thought.projectId && (
+                {(thought.projectId || thought.ideaId) && (
                   <button onClick={() => {
                     setTskTitle(thought.title ?? "")
                     setTskNotes(thought.text ?? "")
                     setTskDueBy("")
                     setTskError("")
                     setMode("promoteToTask")
-                  }} className={BTN_GHOST}>
+                  }} className={BTN_GREEN}>
                     Promote to Task
                   </button>
                 )}
@@ -175,7 +176,7 @@ export default function NestedThought({
 
           {mode === "promoteToTask" && (
             <form onSubmit={handlePromoteToTask} className="space-y-2">
-              <p className="text-xs text-zinc-500">This thought will be removed and added as a task on the project.</p>
+              <p className="text-xs text-zinc-500">This thought will be removed and added as a task.</p>
               <input
                 autoFocus
                 type="text"

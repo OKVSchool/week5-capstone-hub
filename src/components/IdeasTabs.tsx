@@ -63,6 +63,7 @@ export default function IdeasTabs({ thoughts, ideas, liveProjects, removedProjec
             thoughts={standaloneThoughts}
             ideas={ideas}
             liveProjects={liveProjects}
+            tasks={tasks}
           />
         )}
         {active === "ideas" && (
@@ -70,6 +71,7 @@ export default function IdeasTabs({ thoughts, ideas, liveProjects, removedProjec
             ideas={ideas}
             thoughts={thoughts}
             liveProjects={liveProjects}
+            tasks={tasks}
           />
         )}
         {active === "projects" && (
