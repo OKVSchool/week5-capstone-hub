@@ -27,8 +27,8 @@ export default function Crown({ type }: { type: CrownType }) {
   // Ornate: two stacked stroke chevrons matching the basic style
   return (
     <svg
-      width="14" height="16"
-      viewBox="0 0 20 20"
+      width="17" height="19"
+      viewBox="-2 -2 24 24"
       className="inline-block align-middle ml-3 mr-1 flex-shrink-0"
       style={{ filter: shadow }}
       aria-label="Promoted from Thought through Idea"
