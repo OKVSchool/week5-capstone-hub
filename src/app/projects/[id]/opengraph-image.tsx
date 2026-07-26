@@ -1,5 +1,4 @@
 import { ImageResponse } from "next/og"
-import { store } from "@/lib/store"
 
 export const alt = "Project detail"
 export const size = { width: 1200, height: 630 }
@@ -7,7 +6,9 @@ export const contentType = "image/png"
 
 export default async function Image({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-  const project = store.find(p => p.id === id)
+  const API = process.env.NEXT_PUBLIC_API_URL
+  const res = await fetch(`${API}/projects/${id}`, { cache: 'no-store' })
+  const project = res.ok ? await res.json() : null
 
   const title = project?.title ?? "Project not found"
   const description = project?.description ?? ""
